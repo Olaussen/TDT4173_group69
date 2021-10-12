@@ -8,8 +8,7 @@ class Visualizer:
     def __init__(self):
         self.preprocessor = Preprocessor()
 
-    def area_to_price(self):
-        data = self.preprocessor.apartments
+    def area_to_price(self, data):
         x = data["area_total"]
         y =  data["price"]
         plt.plot(x ,y, "o")
