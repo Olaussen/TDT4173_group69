@@ -2,6 +2,7 @@ from Preprocessor import Preprocessor
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 class Visualizer:
 
@@ -25,3 +26,4 @@ class Visualizer:
         plt.scatter(data["price"], data["floor"])
         plt.title("Floor to price")
         plt.show()
+

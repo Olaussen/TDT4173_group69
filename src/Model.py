@@ -1,9 +1,16 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import sklearn
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-from sklearn import ensemble
+from sklearn.model_selection import cross_val_score, KFold
+import seaborn as sns 
+import time
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 
 
 class Model:
@@ -23,18 +30,23 @@ class Model:
         return pd.DataFrame(predictions, columns=["id", "price"])
 
     def fit(self, data, labels):
-        x_train, x_test, y_train, y_test = train_test_split(
-            data, labels, test_size=0.10, random_state=2)
-
-        model = LinearRegression()
+        """model = LinearRegression()
         model.fit(x_train, y_train)
-        self.score = model.score(x_train, y_train)
+        self.score = model.score(x_test, y_test)
         self.model = model
+        return model"""
+        estimators = []
+        estimators.append(('standardize', StandardScaler()))
+        estimators.append(('mlp', KerasRegressor(build_fn=larger_model, epochs=10, batch_size=5, verbose=0)))
+        pipeline = Pipeline(estimators)
+        kfold = KFold(n_splits=10)
+        results = cross_val_score(pipeline, data, labels, cv=kfold)
+        print("Larger: %.2f (%.2f) MSE" % (results.mean(), results.std()))
+        return estimators
+
 
     def predict(self, data):
-        pred = self.model.predict(data)
-        mean = pred.mean(0)
-        return [mean if p <= 0 else p for p in pred]
+        pass
 
     def root_mean_squared_log_error(self, y_true, y_pred):
         y_pred = pd.Series(y_pred)
@@ -48,3 +60,12 @@ class Model:
         result=pd.DataFrame(zipped, columns = ["id", "price_prediction"])
         result.to_csv("../results/predictions.csv", index = False)
         return result
+
+def larger_model():
+        model = Sequential()
+        model.add(Dense(27, input_dim=27, kernel_initializer='normal', activation='relu'))
+        model.add(Dense(6, kernel_initializer='normal', activation='relu'))
+        model.add(Dense(1, kernel_initializer='normal'))
+        # Compile model
+        model.compile(loss='mean_squared_logarithmic_error', optimizer='adam')
+        return model
