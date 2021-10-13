@@ -1,5 +1,5 @@
 id,seller,area_total,area_kitchen,area_living,floor,rooms,layout,ceiling,bathrooms_shared,bathrooms_private,windows_court,windows_street,balconies,loggias,condition,phones,building_id
-23285,,71.4,,,2.0,1.0,,,,,1.0,0.0,1.0,0.0,0.0,1.0,5148
+23285,,71.4,,,2.0,1.0,,,,,1.0,0.0,1.0,0.0,0.0,1.0,'5148'
 23286,,54.0,4.0,50.0,4.0,1.0,,3.0,,,1.0,0.0,,,3.0,1.0,1290
 23287,3.0,39.4,19.6,11.2,10.0,1.0,,2.65,1.0,0.0,1.0,0.0,,,,1.0,681
 23288,,60.9,,,5.0,2.0,1.0,,1.0,0.0,0.0,1.0,,,0.0,1.0,4261

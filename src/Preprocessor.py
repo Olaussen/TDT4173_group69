@@ -70,7 +70,6 @@ class Preprocessor:
 
         for _, row in result.iterrows():
             distances.append(self.distance_from_city_center(row["latitude"], row["longitude"]))
-        result = self.remove_labels(result, ["latitude", "longitude"])
         result["distance"] = distances
 
         if impute:
@@ -78,5 +77,5 @@ class Preprocessor:
         return result
 
     def impute(self, data):
-        imp = SimpleImputer(missing_values=np.nan, strategy="most_frequent")
+        imp = SimpleImputer(missing_values=np.nan, strategy="constant")
         return imp.fit_transform(data)
