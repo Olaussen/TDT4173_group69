@@ -12,17 +12,14 @@ from sklearn.pipeline import Pipeline
 from tensorflow.python.keras.layers.core import Flatten
 from tensorflow.python.keras.layers.normalization import BatchNormalization
 from Preprocessor import Preprocessor
-print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
 
 class Model:
 
     def __init__(self, data, labels):
         self.model = None
-        self.score = None
-        self.loss = None
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
-            data, labels, test_size=0.2, random_state=0)
+            data, labels, test_size=0.1, random_state=2)
 
     """ 
         This function is used just for showing that trying to predict the price based on the total area alone will
@@ -42,22 +39,14 @@ class Model:
         fit a KerasRegressor model. The trained model is bound to self.model.
     """
     def fit(self):
-        EPOCHS = 25
-        BATCH_SIZE = 5
-        FOLDS = 10
+        EPOCHS = 50
+        BATCH_SIZE = 6
 
         estimators = []
         estimators.append(('standardize', StandardScaler()))
         estimators.append(('mlp', KerasRegressor(build_fn=generate_model, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=1)))
         self.model = Pipeline(estimators)
         self.model.fit(self.x_train, self.y_train)
-        test_pred = self.predict(self.x_test) # Test partition prediction
-
-        kfold = KFold(n_splits=FOLDS)
-        results = cross_val_score(self.model, self.x_test, test_pred, cv=kfold, verbose=1, n_jobs=-1)
-
-        print("Results: %.4f (%.4f) RMSLE" % (results.mean(), results.std()))
-        print("Root mean squared log error on test partition: %s" % root_mean_squared_log_error(self.y_test, test_pred))
 
     """
         Predicts the prices for the given data
@@ -71,7 +60,7 @@ class Model:
 def generate_model():
     model = Sequential()
     model.add(Dense(32, input_dim=29, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(32, kernel_initializer='normal', activation='relu'))
+    model.add(Dense(64, kernel_initializer='normal', activation='relu'))
     model.add(Dense(16, kernel_initializer='normal', activation='relu'))
     model.add(Dense(1, kernel_initializer='normal'))
     # Compile model
@@ -107,16 +96,22 @@ def save_predictions(pred):
 def main():
     preprocessor = Preprocessor()
 
+    labels = preprocessor.apartments["price"]
     merged = preprocessor.merged
     merged_test = preprocessor.merged_test
 
     training_data = preprocessor.preprocess(merged, impute=True)
-    labels = preprocessor.apartments["price"]
-
     test_data = preprocessor.preprocess(merged_test, impute=True)
 
     model = Model(training_data, labels)
     model.fit()
+
+    test_pred = model.predict(model.x_test)
+    test_labels = model.y_test.to_numpy()
+    res = pd.DataFrame([(test_labels[i], test_pred[i]) for i in range(len(test_pred))], columns=["actual", "prediction"])
+    print("RMLSE: %s" % root_mean_squared_log_error(model.y_test, test_pred))
+    res.to_csv("split.csv")
+
     pred = model.predict(test_data)
     save_predictions(pred)
 
