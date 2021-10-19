@@ -17,7 +17,7 @@ class Model:
     def __init__(self, data, labels):
         self.model = None
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
-            data, labels, test_size=0.1, random_state=2)
+            data, labels, test_size=0.05, random_state=2)
 
     """ 
         This function is used just for showing that trying to predict the price based on the total area alone will
@@ -38,7 +38,7 @@ class Model:
     """
     def fit(self):
         EPOCHS = 100
-        BATCH_SIZE = 6
+        BATCH_SIZE = 15
 
         estimators = []
         estimators.append(('standardize', StandardScaler()))
@@ -59,12 +59,12 @@ def generate_model():
     model = Sequential()
     model.add(Dense(64, input_dim=28, kernel_initializer='normal', activation='relu'))
     model.add(Dense(128, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(128, kernel_initializer='normal', activation='relu'))
     model.add(Dense(64, kernel_initializer='normal', activation='relu'))
     model.add(Dense(8, kernel_initializer='normal', activation='relu'))
     model.add(Dense(1, kernel_initializer='normal'))
     # Compile model
-    model.compile(loss=loss, optimizer='adam')
+    opt = tf.keras.optimizers.Adam(learning_rate=0.05)
+    model.compile(loss=loss, optimizer=opt)
     return model
 
 """
@@ -103,7 +103,7 @@ def main():
     training_data = preprocessor.preprocess(merged)
     training_data.drop("price", 1, inplace=True)
     test_data = preprocessor.preprocess(merged_test)
-    
+
     model = Model(training_data, labels)
     model.fit()
 
