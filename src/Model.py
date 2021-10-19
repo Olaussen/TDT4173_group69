@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split, cross_val_score, KFold
+from sklearn.model_selection import train_test_split
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
@@ -9,8 +9,6 @@ from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras import backend as K
 from sklearn.pipeline import Pipeline
-from tensorflow.python.keras.layers.core import Flatten
-from tensorflow.python.keras.layers.normalization import BatchNormalization
 from Preprocessor import Preprocessor
 
 
@@ -39,7 +37,7 @@ class Model:
         fit a KerasRegressor model. The trained model is bound to self.model.
     """
     def fit(self):
-        EPOCHS = 50
+        EPOCHS = 100
         BATCH_SIZE = 6
 
         estimators = []
@@ -59,9 +57,11 @@ class Model:
 """
 def generate_model():
     model = Sequential()
-    model.add(Dense(32, input_dim=29, kernel_initializer='normal', activation='relu'))
+    model.add(Dense(64, input_dim=28, kernel_initializer='normal', activation='relu'))
+    model.add(Dense(128, kernel_initializer='normal', activation='relu'))
+    model.add(Dense(128, kernel_initializer='normal', activation='relu'))
     model.add(Dense(64, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(16, kernel_initializer='normal', activation='relu'))
+    model.add(Dense(8, kernel_initializer='normal', activation='relu'))
     model.add(Dense(1, kernel_initializer='normal'))
     # Compile model
     model.compile(loss=loss, optimizer='adam')
@@ -100,16 +100,17 @@ def main():
     merged = preprocessor.merged
     merged_test = preprocessor.merged_test
 
-    training_data = preprocessor.preprocess(merged, impute=True)
-    test_data = preprocessor.preprocess(merged_test, impute=True)
-
+    training_data = preprocessor.preprocess(merged)
+    training_data.drop("price", 1, inplace=True)
+    test_data = preprocessor.preprocess(merged_test)
+    
     model = Model(training_data, labels)
     model.fit()
 
     test_pred = model.predict(model.x_test)
     test_labels = model.y_test.to_numpy()
     res = pd.DataFrame([(test_labels[i], test_pred[i]) for i in range(len(test_pred))], columns=["actual", "prediction"])
-    print("RMLSE: %s" % root_mean_squared_log_error(model.y_test, test_pred))
+    print("RMLSE: %s" % root_mean_squared_log_error(test_labels, test_pred))
     res.to_csv("split.csv")
 
     pred = model.predict(test_data)
