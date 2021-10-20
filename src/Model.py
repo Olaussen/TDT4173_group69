@@ -7,6 +7,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
 from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import VarianceThreshold 
 from tensorflow.keras import backend as K
 from sklearn.pipeline import Pipeline
 from Preprocessor import Preprocessor
@@ -17,7 +18,7 @@ class Model:
     def __init__(self, data, labels):
         self.model = None
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
-            data, labels, test_size=0.05, random_state=2)
+            data, labels, test_size=0.15, random_state=1)
 
     """ 
         This function is used just for showing that trying to predict the price based on the total area alone will
@@ -37,11 +38,12 @@ class Model:
         fit a KerasRegressor model. The trained model is bound to self.model.
     """
     def fit(self):
-        EPOCHS = 100
+        EPOCHS = 1500
         BATCH_SIZE = 15
 
         estimators = []
         estimators.append(('standardize', StandardScaler()))
+        estimators.append(('selector', VarianceThreshold()))
         estimators.append(('mlp', KerasRegressor(build_fn=generate_model, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=1)))
         self.model = Pipeline(estimators)
         self.model.fit(self.x_train, self.y_train)
@@ -59,11 +61,14 @@ def generate_model():
     model = Sequential()
     model.add(Dense(64, input_dim=28, kernel_initializer='normal', activation='relu'))
     model.add(Dense(128, kernel_initializer='normal', activation='relu'))
+    model.add(Dense(256, kernel_initializer='normal', activation='relu'))
+    model.add(Dense(512, kernel_initializer='normal', activation='relu'))
+    model.add(Dense(128, kernel_initializer='normal', activation='relu'))
     model.add(Dense(64, kernel_initializer='normal', activation='relu'))
     model.add(Dense(8, kernel_initializer='normal', activation='relu'))
     model.add(Dense(1, kernel_initializer='normal'))
     # Compile model
-    opt = tf.keras.optimizers.Adam(learning_rate=0.05)
+    opt = tf.keras.optimizers.Adam(learning_rate=0.001)
     model.compile(loss=loss, optimizer=opt)
     return model
 

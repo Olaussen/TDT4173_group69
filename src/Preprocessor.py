@@ -81,7 +81,7 @@ class Preprocessor:
         data["new"]=data["new"].fillna(2)
         data["longitude"]=data["longitude"].fillna(data["longitude"].mean())
         data["latitude"]=data["latitude"].fillna(data["latitude"].mean())
-        data['distance_center']=np.linalg.norm(np.array([data["latitude"].to_numpy(),data["longitude"].to_numpy()]).T-np.array([55.7521,37.6211]),axis=1)
+        data['distance_center']=[self.distance_from_city_center(data["latitude"][i], data["longitude"][i]) for i in range(len(data["latitude"])) ]
         data.drop('latitude',1,inplace=True)
         data.drop('longitude',1,inplace=True)
         data["district"]=data["district"].fillna(0)
