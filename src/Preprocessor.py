@@ -32,10 +32,10 @@ class Preprocessor:
 
     def load_buildings_test(self):
         return pd.read_csv(BUILDINGS_TEST)
-    
+
     def load_merged(self):
         return pd.read_csv(MERGED_TRAIN)
-    
+
     def load_merged_test(self):
         return pd.read_csv(MERGED_TEST)
 
@@ -60,40 +60,51 @@ class Preprocessor:
         return data
 
     def merge_apartment_building(self):
-        result = pd.merge(self.apartments, self.buildings.set_index('id'), how='left', left_on='building_id', right_index=True)
-        result.to_csv("../dataset/merged.csv", index = False)
+        result = pd.merge(self.apartments, self.buildings.set_index(
+            'id'), how='left', left_on='building_id', right_index=True)
+        result.to_csv("../dataset/merged.csv", index=False)
         return result
 
     def preprocess(self, data):
-        data["seller"]=data["seller"].fillna(4)
-        data["area_kitchen"]=data["area_kitchen"].fillna(data["area_kitchen"].mean())
-        data["area_living"]=data["area_living"].fillna(data["area_living"].mean())
-        data.drop('layout',1,inplace=True)
-        data["ceiling"]=data["ceiling"].fillna(data["ceiling"].mean())
-        data["bathrooms_shared"]=data["bathrooms_shared"].fillna(data["bathrooms_shared"].median())
-        data["bathrooms_private"]=data["bathrooms_private"].fillna(data["bathrooms_private"].median())
-        data["windows_court"]=data["windows_court"].fillna(2)
-        data["windows_street"]=data["windows_street"].fillna(2)
-        data["balconies"]=data["balconies"].fillna(0)
-        data["loggias"]=data["loggias"].fillna(0)
-        data["condition"]=data["condition"].fillna(4)
-        data["phones"]=data["phones"].fillna(data["phones"].median())
-        data["new"]=data["new"].fillna(2)
-        data["longitude"]=data["longitude"].fillna(data["longitude"].mean())
-        data["latitude"]=data["latitude"].fillna(data["latitude"].mean())
-        data['distance_center']=[self.distance_from_city_center(data["latitude"][i], data["longitude"][i]) for i in range(len(data["latitude"])) ]
-        data.drop('latitude',1,inplace=True)
-        data.drop('longitude',1,inplace=True)
-        data["district"]=data["district"].fillna(0)
-        data["constructed"]=data["constructed"].fillna(data["constructed"].median())
-        data["material"]=data["material"].fillna(7)
-        data["elevator_without"]=data["elevator_without"].fillna(2)
-        data["elevator_passenger"]=data["elevator_passenger"].fillna(2)
-        data["elevator_service"]=data["elevator_service"].fillna(2)
-        data["parking"]=data["parking"].fillna(3)
-        data["garbage_chute"]=data["garbage_chute"].fillna(2)
-        data["heating"]=data["heating"].fillna(4)
-        data.drop('street',1,inplace=True)
-        data.drop('address',1,inplace=True)
-        data.drop('id',1,inplace=True)
+        data["seller"] = data["seller"].fillna(4)
+        data["area_kitchen"] = data["area_kitchen"].fillna(
+            data["area_kitchen"].mean())
+        data["area_living"] = data["area_living"].fillna(
+            data["area_living"].mean())
+        data.drop('layout', 1, inplace=True)
+        data["ceiling"] = data["ceiling"].fillna(data["ceiling"].mean())
+        data["bathrooms_shared"] = data["bathrooms_shared"].fillna(
+            data["bathrooms_shared"].median())
+        data["bathrooms_private"] = data["bathrooms_private"].fillna(
+            data["bathrooms_private"].median())
+        data["windows_court"] = data["windows_court"].fillna(2)
+        data["windows_street"] = data["windows_street"].fillna(2)
+        data["balconies"] = data["balconies"].fillna(0)
+        data["loggias"] = data["loggias"].fillna(0)
+        data["condition"] = data["condition"].fillna(4)
+        data["phones"] = data["phones"].fillna(data["phones"].median())
+        data["longitude"] = data["longitude"].fillna(data["longitude"].mean())
+        data["latitude"] = data["latitude"].fillna(data["latitude"].mean())
+        data['distance_center'] = [self.distance_from_city_center(
+            data["latitude"][i], data["longitude"][i]) for i in range(len(data["latitude"]))]
+        data.drop('latitude', 1, inplace=True)
+        data.drop('longitude', 1, inplace=True)
+        data["district"] = data["district"].fillna(0)
+        data["constructed"] = data["constructed"].fillna(
+            data["constructed"].median())
+        data["material"] = data["material"].fillna(7)
+        data["elevator_without"] = data["elevator_without"].fillna(2)
+        data["elevator_passenger"] = data["elevator_passenger"].fillna(2)
+        data["elevator_service"] = data["elevator_service"].fillna(2)
+        data["parking"] = data["parking"].fillna(3)
+        data["garbage_chute"] = data["garbage_chute"].fillna(2)
+        data["heating"] = data["heating"].fillna(4)
+        data.drop('street', 1, inplace=True)
+        data.drop('address', 1, inplace=True)
+        data.drop('id', 1, inplace=True)
+        data.drop('phones', 1, inplace=True)
+        data.drop('building_id', 1, inplace=True)
+        data.drop('stories', 1, inplace=True)
+        data.drop('area_living', 1, inplace=True)
+        data.drop('new', 1, inplace=True)
         return data
