@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
@@ -15,12 +16,12 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
 
 
-class Model:
+class TestModel:
 
     def __init__(self, data, labels):
         self.model = None
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
-            data, labels, test_size=0.15, random_state=1)
+            data, labels, test_size=0.2, random_state=1)
 
     """
         This function is used just for showing that trying to predict the price based on the total area alone will
@@ -42,27 +43,17 @@ class Model:
     """
 
     def fit(self):
-        EPOCHS = 100
-        BATCH_SIZE = 6
+        EPOCHS = 500
+        BATCH_SIZE = 32
 
         estimators = []
         estimators.append(('standardize', StandardScaler()))
         estimators.append(('selector', VarianceThreshold()))
-        param_grid = {
-            'bootstrap': [True],
-            'max_depth': [80, 90, 100],
-            'max_features': [15, 23],
-            'min_samples_leaf': [3, 4, 5, 10, 15],
-            'min_samples_split': [8, 10, 12, 20],
-            'n_estimators': [100, 200, 300]
-        }
 
-
-
-        rf = RandomForestRegressor(max_depth=50, max_features=data.shape[1], min_samples_leaf=1, min_samples_split=2, n_estimators=200, verbose=2)
+        #rf = RandomForestRegressor(max_depth=50, max_features=16, min_samples_leaf=1, min_samples_split=2, n_estimators=200, verbose=2)
         #grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=3, n_jobs=-4, verbose=2, scoring="neg_mean_squared_log_error")
-        estimators.append(('rfr', rf))
-        #estimators.append(('mlp', KerasRegressor(build_fn=generate_model, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=1)))
+        #estimators.append(('rfr', rf))
+        estimators.append(('mlp', KerasRegressor(build_fn=generate_model, batch_size=BATCH_SIZE, epochs=EPOCHS)))
         self.model = Pipeline(estimators)
         self.model.fit(self.x_train, self.y_train)
         #print("Best params:", grid_search.best_params_)
@@ -75,55 +66,52 @@ class Model:
         return self.model.predict(data)
 
 
-"""
-    Returns a keras neural network model to be used for training and predictions
-"""
+    """
+        Returns a keras neural network model to be used for training and predictions
+    """
 
 
-def generate_model():
-    model = Sequential()
-    model.add(Dense(64, input_dim=data.shape[1],
-              kernel_initializer='normal', activation='relu'))
-    model.add(Dense(32, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(16, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(1, kernel_initializer='normal'))
-    # Compile model
-    opt = tf.keras.optimizers.Adam(learning_rate=0.008)
-    model.compile(loss=loss, optimizer=opt)
-    return model
+    def generate_model(self):
+        model = tf.keras.models.Sequential()
+        model.add(tf.keras.layers.Dense(units=303, input_dim=16, activation="relu"))
+        model.add(tf.keras.layers.Dense(units=303, activation="relu"))
+        model.add(tf.keras.layers.Dense(units=303, activation="relu"))
+        model.add(tf.keras.layers.Dense(units=1))
+        model.compile(optimizer='adam', loss=loss)
+        return model
 
 
-"""
-    RMSLE (Root mean squared log error) - used as a loss function for the model
-"""
+    """
+        RMSLE (Root mean squared log error) - used as a loss function for the model
+    """
 
 
-def loss(y_true, y_pred):
-    msle = tf.keras.losses.MeanSquaredLogarithmicError()
-    return K.sqrt(msle(y_true, y_pred))
+    def loss(self, y_true, y_pred):
+        msle = tf.keras.losses.MeanSquaredLogarithmicError()
+        return K.sqrt(msle(y_true, y_pred))
 
 
-"""
-    Calculates the RMSLE over the whole prediction set
-"""
+    """
+        Calculates the RMSLE over the whole prediction set
+    """
 
 
-def root_mean_squared_log_error(y_true, y_pred):
-    y_pred = pd.Series(y_pred)
-    log_error = np.log1p(y_pred) - np.log1p(y_true)
-    return np.mean(log_error ** 2) ** 0.5
+    def root_mean_squared_log_error(self, y_true, y_pred):
+        y_pred = pd.Series(y_pred)
+        log_error = np.log1p(y_pred) - np.log1p(y_true)
+        return np.mean(log_error ** 2) ** 0.5
 
 
-"""
-    Method used for saving the actual predictions to file
-"""
+    """
+        Method used for saving the actual predictions to file
+    """
 
 
-def save_predictions(pred):
-    zipped = [(23285+i, pred[i]) for i in range(len(pred))]
-    result = pd.DataFrame(zipped, columns=["id", "price_prediction"])
-    result.to_csv("../results/predictions.csv", index=False)
-    return result
+    def save_predictions(self, pred):
+        zipped = [(23285+i, pred[i]) for i in range(len(pred))]
+        result = pd.DataFrame(zipped, columns=["id", "price_prediction"])
+        result.to_csv("../results/predictions.csv", index=False)
+        return result
 
 
 def main():
@@ -142,6 +130,15 @@ def main():
 
     test_pred = model.predict(model.x_test)
     test_labels = model.y_test.to_numpy()
+
+    fig, ax = plt.subplots()
+    ax.scatter(test_labels, test_pred)
+    ax.plot([test_labels.min(), test_labels.max()], [test_labels.min(), test_labels.max()], 'k--', lw=4)
+    ax.set_xlabel('Measured')
+    ax.set_ylabel('Predicted')
+    plt.show()
+
+
     res = pd.DataFrame([(test_labels[i], test_pred[i]) for i in range(
         len(test_pred))], columns=["actual", "prediction"])
     print("RMLSE: %s" % root_mean_squared_log_error(test_labels, test_pred))
