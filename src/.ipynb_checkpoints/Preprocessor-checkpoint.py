@@ -43,6 +43,11 @@ class Preprocessor:
         if label in data.columns:
             data[label] = np.expm1(data[label]) if inverse else np.log1p(data[label])
         return data
+    
+    def combine_area_rooms(self, data):
+        data["avg_room_size"] = data["area_total"] / data["rooms"]
+        data["living_part_size"] = data["area_living"] / data["area_total"]
+        return data
 
 
     def remove_NaNs(self, data):

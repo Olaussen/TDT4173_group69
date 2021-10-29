@@ -50,7 +50,7 @@ class TestModel:
         estimators.append(('standardize', StandardScaler()))
         estimators.append(('selector', VarianceThreshold()))
 
-        rf = RandomForestRegressor(max_depth=80, max_features=16, min_samples_leaf=1, min_samples_split=2, n_estimators=100, verbose=2)
+        rf = RandomForestRegressor(max_depth=80, max_features=self.x_train.shape[1], min_samples_leaf=4, min_samples_split=8, n_estimators=300, verbose=2)
         #grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=3, n_jobs=-4, verbose=2, scoring="neg_mean_squared_log_error")
         estimators.append(('rfr', rf))
         #estimators.append(('mlp', KerasRegressor(build_fn=self.generate_model, batch_size=BATCH_SIZE, epochs=EPOCHS)))
@@ -73,11 +73,12 @@ class TestModel:
 
     def generate_model(self):
         model = tf.keras.models.Sequential()
-        model.add(tf.keras.layers.Dense(units=64, input_dim=16, activation="relu"))
+        model.add(tf.keras.layers.Dense(units=64, input_dim=self.x_train.shape[1], activation="relu"))
+        model.add(tf.keras.layers.Dense(units=128, activation="relu"))
+        model.add(tf.keras.layers.Dense(units=128, activation="relu"))
         model.add(tf.keras.layers.Dense(units=32, activation="relu"))
-        model.add(tf.keras.layers.Dense(units=16, activation="relu"))
         model.add(tf.keras.layers.Dense(units=1))
-        model.compile(optimizer='adam', loss=self.loss)
+        model.compile(optimizer='adam', loss="mean_squared_error")
         return model
 
 

@@ -33,11 +33,35 @@ class Visualizer:
         plt.title(f'Distribution of {column}', fontsize=18)
         plt.grid(False)
 
-    def plot_vs(self, data, x, y, hue=None, **kwargs):
-        plt.figure(figsize=(12,8))
+    def plot_vs(self, data, x, y, reg=False,  figsize=(12, 8), hue=None,  **kwargs):
+        plt.figure(figsize=figsize)
         sns.scatterplot(data=data, x=x, y=y, hue=hue, **kwargs)
         if hue:
             plt.title(f'{x} vs {y}, by {hue}', fontsize=18)
         else:
             plt.title(f'{x} vs {y}', fontsize=18)
+        if reg:
+            x = data[x]
+            y = data[y]
+            m, b = np.polyfit(x, y, 1)
+            plt.plot(x, m*x + b)
+            
+    def corr_target(self, data, target, cols, x_estimator=None):
+        print(data[cols+[target]].corr())
+        num = len(cols)
+        rows = int(num/2) + (num % 2 > 0)
+        cols = list(cols)
+        y = data[target]
+        fig, ax = plt.subplots(rows, 2, figsize=(12, 5 * (rows)))
+        i = 0
+        j = 0
+        for feat in cols:
+            x = data[feat]
+            if (rows > 1):
+                sns.regplot(x=x, y=y, ax=ax[i][j], x_estimator=x_estimator)
+                j = (j+1)%2
+                i = i + 1 - j
+            else:
+                sns.regplot(x=x, y=y, ax=ax[i], x_estimator=x_estimator)
+                i = i+1
 

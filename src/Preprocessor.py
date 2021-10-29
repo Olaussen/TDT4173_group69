@@ -43,7 +43,15 @@ class Preprocessor:
         if label in data.columns:
             data[label] = np.expm1(data[label]) if inverse else np.log1p(data[label])
         return data
+    
+    def combine_area_rooms(self, data):
+        data["avg_room_size"] = data["area_total"] / data["rooms"]
+        data["living_part"] = data["area_living"] / data["avg_room_size"]
+        return data
 
+    def combine_baths(self, data):
+        data["bathroom_amount"] = data["bathrooms_private"] +  data["bathrooms_shared"]
+        return data
 
     def remove_NaNs(self, data):
         data["seller"] = data["seller"].fillna(4)
@@ -122,4 +130,7 @@ class Preprocessor:
         data = self.general_removal(data)
         data = self.remove_NaNs(data)
         data = self.remove_redundant_features(data)
+        data = self.combine_area_rooms(data)
+        self.combine_baths(data)
+        data = self.remove_labels(data, labels=["bathrooms_private", "bathrooms_shared"])
         return data
