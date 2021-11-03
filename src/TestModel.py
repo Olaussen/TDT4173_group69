@@ -16,14 +16,14 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import RepeatedKFold
-
+import xgboost
 
 class TestModel:
 
     def __init__(self, data, labels):
         self.model = None
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
-            data, labels, test_size=0.02)
+            data, labels, test_size=0.33)
 
     """
         This function is used just for showing that trying to predict the price based on the total area alone will
@@ -58,7 +58,10 @@ class TestModel:
         #cv = RepeatedKFold(n_splits=5, n_repeats=10, random_state=1)
         #ridge = RidgeCV(alphas=np.arange(0, 1, 0.01), cv=cv, scoring="neg_mean_squared_log_error")
         #estimators.append(("ridge", ridge))
-        estimators.append(('mlp', KerasRegressor(build_fn=self.generate_model, batch_size=BATCH_SIZE, epochs=EPOCHS)))
+        boost = xgboost.XGBRegressor(base_score=0.5, colsample_bylevel=1, colsample_bytree=0.4, gamma=0, learning_rate=0.07, max_delta_step=0, max_depth=3, min_child_weight=1.5,
+                                     missing=None, n_estimators=10000, nthread=-1, objective='reg:linear', reg_alpha=0.75, reg_lambda=0.45, scale_pos_weight=1, seed=42, silent=True, subsample=0.6)
+        #estimators.append(('mlp', KerasRegressor(build_fn=self.generate_model, batch_size=BATCH_SIZE, epochs=EPOCHS)))
+        estimators.append(("boost", boost))
         self.model = Pipeline(estimators)
         return self.model.fit(self.x_train, self.y_train)
         #print("Best params:", grid_search.best_params_)
@@ -70,47 +73,40 @@ class TestModel:
     def predict(self, data):
         return self.model.predict(data)
 
-
     """
         Returns a keras neural network model to be used for training and predictions
     """
 
-
     def generate_model(self):
         model = tf.keras.models.Sequential()
-        model.add(tf.keras.layers.Dense(units=50, input_dim=self.x_train.shape[1], activation="relu"))
+        model.add(tf.keras.layers.Dense(
+            units=50, input_dim=self.x_train.shape[1], activation="relu"))
         model.add(tf.keras.layers.Dense(units=25, activation="relu"))
         model.add(tf.keras.layers.Dense(units=50, activation="relu"))
         model.add(tf.keras.layers.Dense(units=1))
         model.compile(optimizer='adam', loss=self.loss)
         return model
 
-
     """
         RMSLE (Root mean squared log error) - used as a loss function for the model
     """
-
 
     def loss(self, y_true, y_pred):
         msle = tf.keras.losses.MeanSquaredLogarithmicError()
         return K.sqrt(msle(y_true, y_pred))
 
-
     """
         Calculates the RMSLE over the whole prediction set
     """
-
 
     def root_mean_squared_log_error(self, y_true, y_pred):
         y_pred = pd.Series(y_pred)
         log_error = np.log1p(y_pred) - np.log1p(y_true)
         return np.mean(log_error ** 2) ** 0.5
 
-
     """
         Method used for saving the actual predictions to file
     """
-
 
     def save_predictions(self, pred):
         zipped = [(23285+i, pred[i]) for i in range(len(pred))]
@@ -138,11 +134,11 @@ def main():
 
     fig, ax = plt.subplots()
     ax.scatter(test_labels, test_pred)
-    ax.plot([test_labels.min(), test_labels.max()], [test_labels.min(), test_labels.max()], 'k--', lw=4)
+    ax.plot([test_labels.min(), test_labels.max()], [
+            test_labels.min(), test_labels.max()], 'k--', lw=4)
     ax.set_xlabel('Measured')
     ax.set_ylabel('Predicted')
     plt.show()
-
 
     res = pd.DataFrame([(test_labels[i], test_pred[i]) for i in range(
         len(test_pred))], columns=["actual", "prediction"])
@@ -153,4 +149,4 @@ def main():
     model.save_predictions(pred)
 
 
-#main()
+# main()
