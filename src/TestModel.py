@@ -23,7 +23,7 @@ class TestModel:
     def __init__(self, data, labels):
         self.model = None
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
-            data, labels, test_size=0.2, random_state=10)
+            data, labels, test_size=0.02)
 
     """
         This function is used just for showing that trying to predict the price based on the total area alone will
@@ -45,22 +45,22 @@ class TestModel:
     """
 
     def fit(self):
-        EPOCHS = 100
-        BATCH_SIZE = 16
+        EPOCHS = 250
+        BATCH_SIZE = 10
 
         estimators = []
         estimators.append(('standardize', StandardScaler()))
         estimators.append(('selector', VarianceThreshold()))
 
-        rf = RandomForestRegressor(max_depth=150, max_features="auto", min_samples_leaf=1, min_samples_split=2, n_estimators=500, verbose=2)
+        #rf = RandomForestRegressor(max_depth=75, max_features="auto", min_samples_leaf=1, min_samples_split=2, n_estimators=80, verbose=2)
         #grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=3, n_jobs=-4, verbose=2, scoring="neg_mean_squared_log_error")
-        estimators.append(('rfr', rf))
+        #estimators.append(('rfr', rf))
         #cv = RepeatedKFold(n_splits=5, n_repeats=10, random_state=1)
         #ridge = RidgeCV(alphas=np.arange(0, 1, 0.01), cv=cv, scoring="neg_mean_squared_log_error")
         #estimators.append(("ridge", ridge))
-        #estimators.append(('mlp', KerasRegressor(build_fn=self.generate_model, batch_size=BATCH_SIZE, epochs=EPOCHS)))
+        estimators.append(('mlp', KerasRegressor(build_fn=self.generate_model, batch_size=BATCH_SIZE, epochs=EPOCHS)))
         self.model = Pipeline(estimators)
-        self.model.fit(self.x_train, self.y_train)
+        return self.model.fit(self.x_train, self.y_train)
         #print("Best params:", grid_search.best_params_)
 
     """
@@ -78,10 +78,9 @@ class TestModel:
 
     def generate_model(self):
         model = tf.keras.models.Sequential()
-        model.add(tf.keras.layers.Dense(units=64, input_dim=self.x_train.shape[1], activation="relu"))
-        model.add(tf.keras.layers.Dense(units=64, activation="relu"))
-        model.add(tf.keras.layers.LayerNormalization())
-        model.add(tf.keras.layers.Dense(units=32, activation="relu"))
+        model.add(tf.keras.layers.Dense(units=50, input_dim=self.x_train.shape[1], activation="relu"))
+        model.add(tf.keras.layers.Dense(units=25, activation="relu"))
+        model.add(tf.keras.layers.Dense(units=50, activation="relu"))
         model.add(tf.keras.layers.Dense(units=1))
         model.compile(optimizer='adam', loss=self.loss)
         return model

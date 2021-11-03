@@ -47,49 +47,101 @@ class Preprocessor:
                 data[label]) if inverse else np.log1p(data[label])
         return data
 
+    def split_categorical_features(self):
+        train = self.remove_NaNs(self.merged.copy())
+        test = self.remove_NaNs(self.merged_test.copy())
+        train = self.general_removal(train)
+        test = self.general_removal(test)
+        final_df = pd.concat([train, test], axis=0)
+        categorical = ["seller", "district", "parking",
+                       "condition", "heating", "material"]
+        df_final = final_df.copy()
+        i = 0
+        for field in categorical:
+
+            df1 = pd.get_dummies(final_df[field], drop_first=True, prefix=categorical[i])
+            final_df.drop([field], axis=1, inplace=True)
+
+            if i == 0:
+                df_final = df1.copy()
+            else:
+                df_final = pd.concat([df_final, df1], axis=1)
+            i = i + 1
+
+        df_final = pd.concat([final_df, df_final], axis=1)
+        return df_final
+
     def district_avg(self):
         districts = {}
-        for _, row in pd.concat([self.merged, self.merged_test]).iterrows():
-            key = str(int(row["district"] if not np.isnan(row["district"]) else -1))
+        for _, row in pd.concat([self.merged.copy(), self.merged_test.copy()]).iterrows():
+            key = str(
+                int(row["district"] if not np.isnan(row["district"]) else -1))
             if key in districts:
-                districts[key]["lat"] += row["latitude"] if not np.isnan(row["latitude"]) else 0
-                districts[key]["lon"] += row["longitude"] if not np.isnan(row["longitude"]) else 0
-                districts[key]["area_kitchen"] += np.log1p(row["area_kitchen"]) if not np.isnan(row["area_kitchen"]) else 0
-                districts[key]["area_living"] += np.log1p(row["area_living"]) if not np.isnan(row["area_living"]) else 0
-                districts[key]["bathrooms_shared"] += row["bathrooms_shared"] if not np.isnan(row["bathrooms_shared"]) else 0
-                districts[key]["bathrooms_private"] += row["bathrooms_private"] if not np.isnan(row["bathrooms_private"]) else 0
-                districts[key]["ceiling"] += row["ceiling"] if not np.isnan(row["ceiling"]) else 0
-                districts[key]["phones"] += row["phones"] if not np.isnan(row["phones"]) else 0
-                districts[key]["constructed"] += row["constructed"] if not np.isnan(row["constructed"]) else 0
+                districts[key]["lat"] += row["latitude"] if not np.isnan(
+                    row["latitude"]) else 0
+                districts[key]["lon"] += row["longitude"] if not np.isnan(
+                    row["longitude"]) else 0
+                districts[key]["area_kitchen"] += np.log1p(
+                    row["area_kitchen"]) if not np.isnan(row["area_kitchen"]) else 0
+                districts[key]["area_living"] += np.log1p(
+                    row["area_living"]) if not np.isnan(row["area_living"]) else 0
+                districts[key]["bathrooms_shared"] += row["bathrooms_shared"] if not np.isnan(
+                    row["bathrooms_shared"]) else 0
+                districts[key]["bathrooms_private"] += row["bathrooms_private"] if not np.isnan(
+                    row["bathrooms_private"]) else 0
+                districts[key]["ceiling"] += row["ceiling"] if not np.isnan(
+                    row["ceiling"]) else 0
+                districts[key]["phones"] += row["phones"] if not np.isnan(
+                    row["phones"]) else 0
+                districts[key]["constructed"] += row["constructed"] if not np.isnan(
+                    row["constructed"]) else 0
                 districts[key]["amount"] += 1
-            else: 
-                districts[key] = {} 
-                districts[key]["lat"] = row["latitude"] if not np.isnan(row["latitude"]) else 0
-                districts[key]["lon"] = row["latitude"] if not np.isnan(row["latitude"]) else 0
-                districts[key]["area_kitchen"] = np.log1p(row["area_kitchen"]) if not np.isnan(row["area_kitchen"]) else 0
-                districts[key]["area_living"] = np.log1p(row["area_living"]) if not np.isnan(row["area_living"]) else 0
-                districts[key]["bathrooms_shared"] = row["bathrooms_shared"] if not np.isnan(row["bathrooms_shared"]) else 0
-                districts[key]["bathrooms_private"] = row["bathrooms_private"] if not np.isnan(row["bathrooms_private"]) else 0
-                districts[key]["ceiling"] = row["ceiling"] if not np.isnan(row["ceiling"]) else 0
-                districts[key]["phones"] = row["phones"] if not np.isnan(row["phones"]) else 0
-                districts[key]["constructed"] = row["constructed"] if not np.isnan(row["constructed"]) else 0
+            else:
+                districts[key] = {}
+                districts[key]["lat"] = row["latitude"] if not np.isnan(
+                    row["latitude"]) else 0
+                districts[key]["lon"] = row["latitude"] if not np.isnan(
+                    row["latitude"]) else 0
+                districts[key]["area_kitchen"] = np.log1p(
+                    row["area_kitchen"]) if not np.isnan(row["area_kitchen"]) else 0
+                districts[key]["area_living"] = np.log1p(
+                    row["area_living"]) if not np.isnan(row["area_living"]) else 0
+                districts[key]["bathrooms_shared"] = row["bathrooms_shared"] if not np.isnan(
+                    row["bathrooms_shared"]) else 0
+                districts[key]["bathrooms_private"] = row["bathrooms_private"] if not np.isnan(
+                    row["bathrooms_private"]) else 0
+                districts[key]["ceiling"] = row["ceiling"] if not np.isnan(
+                    row["ceiling"]) else 0
+                districts[key]["phones"] = row["phones"] if not np.isnan(
+                    row["phones"]) else 0
+                districts[key]["constructed"] = row["constructed"] if not np.isnan(
+                    row["constructed"]) else 0
                 districts[key]["amount"] = 1
 
         for district in districts:
-            districts[district]["lat"] = districts[district]["lat"] / districts[district]["amount"]
-            districts[district]["lon"] = districts[district]["lon"] / districts[district]["amount"]
-            districts[district]["area_kitchen"] = districts[district]["area_kitchen"] / districts[district]["amount"]
-            districts[district]["area_living"] = districts[district]["area_living"] / districts[district]["amount"]
-            districts[district]["bathrooms_shared"] = round(districts[district]["bathrooms_shared"] / districts[district]["amount"])
-            districts[district]["bathrooms_private"] = round(districts[district]["bathrooms_private"] / districts[district]["amount"])
+            districts[district]["lat"] = districts[district]["lat"] / \
+                districts[district]["amount"]
+            districts[district]["lon"] = districts[district]["lon"] / \
+                districts[district]["amount"]
+            districts[district]["area_kitchen"] = districts[district]["area_kitchen"] / \
+                districts[district]["amount"]
+            districts[district]["area_living"] = districts[district]["area_living"] / \
+                districts[district]["amount"]
+            districts[district]["bathrooms_shared"] = round(
+                districts[district]["bathrooms_shared"] / districts[district]["amount"])
+            districts[district]["bathrooms_private"] = round(
+                districts[district]["bathrooms_private"] / districts[district]["amount"])
             if districts[district]["bathrooms_shared"] == 0 and districts[district]["bathrooms_private"] == 0:
                 if districts[district]["bathrooms_private"] > districts[district]["bathrooms_shared"]:
                     districts[district]["bathrooms_private"] = 1
                 else:
                     districts[district]["bathrooms_shared"] = 1
-            districts[district]["ceiling"] = round(districts[district]["ceiling"] / districts[district]["amount"], 3)
-            districts[district]["phones"] = round(districts[district]["phones"] / districts[district]["amount"])
-            districts[district]["constructed"] = round(districts[district]["constructed"] / districts[district]["amount"])
+            districts[district]["ceiling"] = round(
+                districts[district]["ceiling"] / districts[district]["amount"], 3)
+            districts[district]["phones"] = round(
+                districts[district]["phones"] / districts[district]["amount"])
+            districts[district]["constructed"] = round(
+                districts[district]["constructed"] / districts[district]["amount"])
         return districts
 
     def combine_area_rooms(self, data):
@@ -97,14 +149,14 @@ class Preprocessor:
         return data
 
     def combine_baths(self, data):
-        data["bathroom_amount"] = data["bathrooms_private"] + data["bathrooms_shared"]
+        data["bathroom_amount"] = data["bathrooms_private"] + \
+            data["bathrooms_shared"]
         return data
 
     def relative_floor(self, data):
         data["relative_floor"] = data["stories"] * data["floor"]
         return data
 
-    
     """def find_rich_neighboors(self, data):
         rich = 16.651093950010974
         rich_neighboors = []
@@ -128,14 +180,14 @@ class Preprocessor:
         return data
     """
 
-    def find_rich_neighboors(self, data, test = False):
+    def find_rich_neighboors(self, data, test=False):
         path = 'neighboors_test.pickle' if test else 'neighboors_train.pickle'
         with open(path, 'rb') as file:
-                rich_neighboors_loaded = load(file)
+            rich_neighboors_loaded = load(file)
 
         data["rich_neighboors"] = rich_neighboors_loaded
         return data
-    
+
     def combine_windows(self, data):
         has_windows = []
         for _, row in data.iterrows():
@@ -165,7 +217,8 @@ class Preprocessor:
     def remove_NaNs(self, data):
         district_average = self.district_avg()
         for i, row in data.iterrows():
-            key = str(int(row["district"] if not np.isnan(row["district"]) else -1))
+            key = str(
+                int(row["district"] if not np.isnan(row["district"]) else -1))
             if np.isnan(row["latitude"]):
                 data["latitude"][i] = district_average[key]["lat"]
             if np.isnan(row["longitude"]):
@@ -186,34 +239,40 @@ class Preprocessor:
                 data["constructed"][i] = district_average[key]["constructed"]
         data['distance_center'] = [self.distance(
             data["latitude"][i], data["longitude"][i]) for i in range(len(data["latitude"]))]
-        data["seller"] = data["seller"].fillna(-1)
-        data["windows_court"] = data["windows_court"].fillna(-1)
-        data["windows_street"] = data["windows_street"].fillna(-1)
-        data["balconies"] = data["balconies"].fillna(-1)
-        data["loggias"] = data["loggias"].fillna(-1)
-        data["condition"] = data["condition"].fillna(-1)
-        data["new"] = data["new"].fillna(-1)
-        data["district"] = data["district"].fillna(-1)
-        data["material"] = data["material"].fillna(-1)
-        data["elevator_without"] = data["elevator_without"].fillna(-1)
+        data["seller"] = data["seller"].fillna(data["seller"].mode()[0])
+        data["windows_court"] = data["windows_court"].fillna(
+            data["windows_court"].mode()[0])
+        data["windows_street"] = data["windows_street"].fillna(
+            data["windows_street"].mode()[0])
+        data["balconies"] = data["balconies"].fillna(
+            data["balconies"].mode()[0])
+        data["loggias"] = data["loggias"].fillna(data["loggias"].mode()[0])
+        data["condition"] = data["condition"].fillna(
+            data["condition"].mode()[0])
+        data["district"] = data["district"].fillna(data["district"].mode()[0])
+        data["new"] = data["new"].fillna(data["new"].mode()[0])
+        data["material"] = data["material"].fillna(data["material"].mode()[0])
+        data["elevator_without"] = data["elevator_without"].fillna(
+            data["elevator_without"].mode()[0])
         data["elevator_passenger"] = data["elevator_passenger"].fillna(
-            -1)
-        data["elevator_service"] = data["elevator_service"].fillna(-1)
-        data["parking"] = data["parking"].fillna(-1)
-        data["garbage_chute"] = data["garbage_chute"].fillna(-1)
-        data["heating"] = data["heating"].fillna(-1)
+            data["elevator_passenger"].mode()[0])
+        data["elevator_service"] = data["elevator_service"].fillna(
+            data["elevator_service"].mode()[0])
+        data["parking"] = data["parking"].fillna(data["parking"].mode()[0])
+        data["garbage_chute"] = data["garbage_chute"].fillna(
+            data["garbage_chute"].mode()[0])
+        data["heating"] = data["heating"].fillna(data["heating"].mode()[0])
         return data
 
     def general_removal(self, data):
         data = self.remove_labels(
-            data, ["layout", "street", "address", "id", "building_id"])
+            data.copy(), ["layout", "street", "address", "id", "building_id"])
         return data
 
     def remove_redundant_features(self, data):
-        data = self.remove_labels(data, ["balconies", "parking", "loggias", "condition", "heating", "ceiling", "windows_street", "windows_court", "elevator_passenger", "phones", "new", "elevator_service", "material"])
         return data
 
-    def distance(self, lat, lon, lat_to = 55.753649, lon_to = 37.621067):
+    def distance(self, lat, lon, lat_to=55.753649, lon_to=37.621067):
         radius = 6373000.0  # Earth radius in meters
         lat = radians(lat)
         lon = radians(lon)
@@ -243,8 +302,6 @@ class Preprocessor:
         data = self.logify(data, "area_total")
         data = self.logify(data, "area_living")
         data = self.logify(data, "area_kitchen")
-        data = self.remove_NaNs(data)
-        data = self.general_removal(data)
         #data = self.find_rich_neighboors(data, test=test)
         data = self.remove_redundant_features(data)
         #data = self.combine_area_rooms(data)
@@ -252,11 +309,13 @@ class Preprocessor:
         #data = self.combine_windows(data)
         data = self.relative_floor(data)
         data = self.remove_labels(
-        data, labels=["bathrooms_private", "bathrooms_shared", "latitude", "longitude"])
+            data, labels=["bathrooms_private", "bathrooms_shared", "latitude", "longitude"])
         return data
+
 
 def main():
     p = Preprocessor()
     p.preprocess(p.merged)
-    
+
+
 #main()
