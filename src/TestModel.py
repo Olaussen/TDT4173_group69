@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import RepeatedKFold
-import xgboost
+# import xgboost
 
 class TestModel:
 

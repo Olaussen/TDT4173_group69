@@ -3,6 +3,11 @@ import pandas as pd
 import numpy as np
 from math import sin, cos, sqrt, atan2, radians
 from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import PowerTransformer
+from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import MaxAbsScaler
+from sklearn.preprocessing import MinMaxScaler
+from scipy import stats
 from pickle import dump, load
 
 APARTMENTS_TRAIN = "../dataset/apartments_train.csv"
@@ -179,6 +184,16 @@ class Preprocessor:
         data["rich_neighboors"] = rich_neighboors
         return data
     """
+    def feature_scaling(self,data):
+        feature_scale = [feature for feature in data.columns if feature not in ['id','price']]
+        scaler = PowerTransformer(method="box-cox")
+        scaler.fit(data[feature_scale])
+        return pd.concat([data[['price']].reset_index(drop=True),pd.DataFrame(scaler.transform(data[feature_scale]),columns=feature_scale)],axis=1)
+    
+    def skew_fix(self,data,label, inverse=False):
+        if label in data.columns:
+            data[label] = stats.boxcox(data[label])
+        return data
 
     def find_rich_neighboors(self, data, test=False):
         path = 'neighboors_test.pickle' if test else 'neighboors_train.pickle'
@@ -302,16 +317,16 @@ class Preprocessor:
         data = self.logify(data, "area_total")
         data = self.logify(data, "area_living")
         data = self.logify(data, "area_kitchen")
-        #data = self.find_rich_neighboors(data, test=test)
+        data = self.find_rich_neighboors(data, test=test)
+        data = self.general_removal(data)
+        data = self.remove_NaNs(data)
         data = self.remove_redundant_features(data)
         #data = self.combine_area_rooms(data)
         data = self.combine_baths(data)
         #data = self.combine_windows(data)
         data = self.relative_floor(data)
-        data = self.remove_labels(
-            data, labels=["bathrooms_private", "bathrooms_shared", "latitude", "longitude"])
+        #data = self.remove_labels(data, labels=["bathrooms_private", "bathrooms_shared", "latitude", "longitude"])
         return data
-
 
 def main():
     p = Preprocessor()
