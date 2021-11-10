@@ -10,9 +10,10 @@ class Visualizer:
     def list_missing(self, data):
         cols = [col for col in data.columns]
         tot_rows = len(data)
+        print("Total length:", len(data))
         for col in cols:
             missing = data[col].isna().sum()
-            print(f'{col}: {round(missing*100/tot_rows, 2)}%')
+            print(f'{col}: Amount: {missing} | {round(missing*100/tot_rows, 2)}%')
 
     def price_correlation(self, data, figsize=(20,15)):
         corr = data.corr()

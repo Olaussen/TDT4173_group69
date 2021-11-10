@@ -11,19 +11,20 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import VarianceThreshold
 from tensorflow.keras import backend as K
 from sklearn.pipeline import Pipeline
+from sklearn.metrics import mean_squared_log_error
 from Preprocessor import Preprocessor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import RepeatedKFold
-import xgboost
+
 
 class TestModel:
 
-    def __init__(self, data, labels):
+    def __init__(self, x_train, y_train):
         self.model = None
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
-            data, labels, test_size=0.33)
+        self.x_train = x_train
+        self.y_train = y_train
 
     """
         This function is used just for showing that trying to predict the price based on the total area alone will
@@ -48,20 +49,42 @@ class TestModel:
         EPOCHS = 250
         BATCH_SIZE = 10
 
+        n_estimators = [50, 75, 100, 200]
+        max_depth = [5, 8, 15, 25, 30, 50]
+        min_samples_split = [2, 5, 10, 15, 30]
+        min_samples_leaf = [1, 2, 5, 10]
+
+        hyperF = dict(n_estimators=n_estimators, max_depth=max_depth,
+                      min_samples_split=min_samples_split,
+                      min_samples_leaf=min_samples_leaf)
+
         estimators = []
         estimators.append(('standardize', StandardScaler()))
-        estimators.append(('selector', VarianceThreshold()))
 
-        #rf = RandomForestRegressor(max_depth=75, max_features="auto", min_samples_leaf=1, min_samples_split=2, n_estimators=80, verbose=2)
-        #grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=3, n_jobs=-4, verbose=2, scoring="neg_mean_squared_log_error")
-        #estimators.append(('rfr', rf))
+        rf = RandomForestRegressor(max_depth=150, max_features="auto", min_samples_leaf=1, min_samples_split=2, n_estimators=300, verbose=2)
+        estimators.append(('rfr', rf))
+        #param_grid = [
+            #{'n_estimators': [50, 75, 100, 120, 200],
+             #   'max_features': [1, 2, 4, 6, 8]},
+            #{'bootstrap': [False], 'n_estimators': [
+            #    3, 10, 50, 100], 'max_features': [1, 2, 3, 4]},
+        #]
+        #forest_reg = RandomForestRegressor(random_state=42)
+        # train across 5 folds, that's a total of (12+6)*5=90 rounds of training
+        #grid_search = GridSearchCV(forest_reg, param_grid, cv=5,
+                                   #scoring='neg_mean_squared_log_error',
+                                   #return_train_score=True,
+                                   #verbose=2)
+        #fitted = grid_search.fit(self.x_train, self.y_train)
+        #print(grid_search.best_params_)
+        #return fitted
         #cv = RepeatedKFold(n_splits=5, n_repeats=10, random_state=1)
         #ridge = RidgeCV(alphas=np.arange(0, 1, 0.01), cv=cv, scoring="neg_mean_squared_log_error")
         #estimators.append(("ridge", ridge))
-        boost = xgboost.XGBRegressor(base_score=0.5, colsample_bylevel=1, colsample_bytree=0.4, gamma=0, learning_rate=0.07, max_delta_step=0, max_depth=3, min_child_weight=1.5,
-                                     missing=None, n_estimators=10000, nthread=-1, objective='reg:linear', reg_alpha=0.75, reg_lambda=0.45, scale_pos_weight=1, seed=42, silent=True, subsample=0.6)
+        # boost = xgboost.XGBRegressor(base_score=0.5, colsample_bylevel=1, colsample_bytree=0.4, gamma=0, learning_rate=0.07, max_delta_step=0, max_depth=3, min_child_weight=1.5,
+        # missing=None, n_estimators=10000, nthread=-1, objective='reg:linear', reg_alpha=0.75, reg_lambda=0.45, scale_pos_weight=1, seed=42, silent=True, subsample=0.6)
         #estimators.append(('mlp', KerasRegressor(build_fn=self.generate_model, batch_size=BATCH_SIZE, epochs=EPOCHS)))
-        estimators.append(("boost", boost))
+        #estimators.append(("boost", boost))
         self.model = Pipeline(estimators)
         return self.model.fit(self.x_train, self.y_train)
         #print("Best params:", grid_search.best_params_)
@@ -84,7 +107,7 @@ class TestModel:
         model.add(tf.keras.layers.Dense(units=25, activation="relu"))
         model.add(tf.keras.layers.Dense(units=50, activation="relu"))
         model.add(tf.keras.layers.Dense(units=1))
-        model.compile(optimizer='adam', loss=self.loss)
+        model.compile(optimizer='adam', loss=self.root_mean_squared_log_error)
         return model
 
     """
@@ -100,9 +123,7 @@ class TestModel:
     """
 
     def root_mean_squared_log_error(self, y_true, y_pred):
-        y_pred = pd.Series(y_pred)
-        log_error = np.log1p(y_pred) - np.log1p(y_true)
-        return np.mean(log_error ** 2) ** 0.5
+        return mean_squared_log_error(y_true, y_pred) ** 0.5
 
     """
         Method used for saving the actual predictions to file

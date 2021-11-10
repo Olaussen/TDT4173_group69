@@ -4,6 +4,7 @@ import numpy as np
 from math import sin, cos, sqrt, atan2, radians
 from sklearn.impute import SimpleImputer
 from pickle import dump, load
+pd.options.mode.chained_assignment = None  # default='warn'
 
 APARTMENTS_TRAIN = "../dataset/apartments_train.csv"
 APARTMENTS_TEST = "../dataset/apartments_test.csv"
@@ -22,6 +23,7 @@ class Preprocessor:
         self.buildings_test = self.load_buildings_test()
         self.merged = self.load_merged()
         self.merged_test = self.load_merged_test()
+        self.district_avg_dict = None
 
     def load_apartments(self):
         return pd.read_csv(APARTMENTS_TRAIN)
@@ -47,6 +49,23 @@ class Preprocessor:
                 data[label]) if inverse else np.log1p(data[label])
         return data
 
+    def get_closest_district(self, data, non_district):
+        copy = data.copy()[data["district"].notna()]
+        for i, row in non_district.iterrows():
+            best = None
+            closest = float("inf")
+            for _, check in copy.iterrows():
+                distance = self.distance(
+                    row["latitude"], row["longitude"], check["latitude"], check["longitude"])
+                if distance < 250:
+                    data["district"][i] = check["district"]
+                    break
+                if distance < closest:
+                    closest = distance
+                    best = row["district"]
+            non_district["district"][i] = best
+        return non_district
+
     def split_categorical_features(self):
         train = self.remove_NaNs(self.merged.copy())
         test = self.remove_NaNs(self.merged_test.copy())
@@ -59,7 +78,8 @@ class Preprocessor:
         i = 0
         for field in categorical:
 
-            df1 = pd.get_dummies(final_df[field], drop_first=True, prefix=categorical[i])
+            df1 = pd.get_dummies(
+                final_df[field], drop_first=True, prefix=categorical[i])
             final_df.drop([field], axis=1, inplace=True)
 
             if i == 0:
@@ -71,9 +91,9 @@ class Preprocessor:
         df_final = pd.concat([final_df, df_final], axis=1)
         return df_final
 
-    def district_avg(self):
+    def district_avg(self, data):
         districts = {}
-        for _, row in pd.concat([self.merged.copy(), self.merged_test.copy()]).iterrows():
+        for _, row in data.iterrows():
             key = str(
                 int(row["district"] if not np.isnan(row["district"]) else -1))
             if key in districts:
@@ -89,8 +109,6 @@ class Preprocessor:
                     row["bathrooms_shared"]) else 0
                 districts[key]["bathrooms_private"] += row["bathrooms_private"] if not np.isnan(
                     row["bathrooms_private"]) else 0
-                districts[key]["ceiling"] += row["ceiling"] if not np.isnan(
-                    row["ceiling"]) else 0
                 districts[key]["phones"] += row["phones"] if not np.isnan(
                     row["phones"]) else 0
                 districts[key]["constructed"] += row["constructed"] if not np.isnan(
@@ -110,8 +128,6 @@ class Preprocessor:
                     row["bathrooms_shared"]) else 0
                 districts[key]["bathrooms_private"] = row["bathrooms_private"] if not np.isnan(
                     row["bathrooms_private"]) else 0
-                districts[key]["ceiling"] = row["ceiling"] if not np.isnan(
-                    row["ceiling"]) else 0
                 districts[key]["phones"] = row["phones"] if not np.isnan(
                     row["phones"]) else 0
                 districts[key]["constructed"] = row["constructed"] if not np.isnan(
@@ -131,13 +147,6 @@ class Preprocessor:
                 districts[district]["bathrooms_shared"] / districts[district]["amount"])
             districts[district]["bathrooms_private"] = round(
                 districts[district]["bathrooms_private"] / districts[district]["amount"])
-            if districts[district]["bathrooms_shared"] == 0 and districts[district]["bathrooms_private"] == 0:
-                if districts[district]["bathrooms_private"] > districts[district]["bathrooms_shared"]:
-                    districts[district]["bathrooms_private"] = 1
-                else:
-                    districts[district]["bathrooms_shared"] = 1
-            districts[district]["ceiling"] = round(
-                districts[district]["ceiling"] / districts[district]["amount"], 3)
             districts[district]["phones"] = round(
                 districts[district]["phones"] / districts[district]["amount"])
             districts[district]["constructed"] = round(
@@ -146,6 +155,8 @@ class Preprocessor:
 
     def combine_area_rooms(self, data):
         data["avg_room_size"] = data["area_total"] / data["rooms"]
+        data["living_fraction"] = data["area_living"] / data["area_total"]
+        data["kitchen_fraction"] = data["area_kitchen"] / data["area_total"]
         return data
 
     def combine_baths(self, data):
@@ -188,9 +199,13 @@ class Preprocessor:
         data["rich_neighboors"] = rich_neighboors_loaded
         return data
 
-    def combine_windows(self, data):
+    def combine_windows(self, data, boolean=False):
         has_windows = []
         for _, row in data.iterrows():
+            if boolean:
+                has_windows.append(row["windows_court"]
+                                   >= 1 or row["windows_street"] >= 1)
+                continue
             if row["windows_court"] == -1 and row["windows_street"] == -1:
                 has_windows.append(-1)
             elif row["windows_court"] == -1 or row["windows_street"] == -1:
@@ -215,7 +230,15 @@ class Preprocessor:
         return data
 
     def remove_NaNs(self, data):
-        district_average = self.district_avg()
+        district_average = self.district_avg(data)
+        self.district_avg_dict = district_average
+        area_living = data[data["area_living"].notna()]
+        area_living_fraction = (
+            area_living["area_living"] / area_living["area_total"]).mean()
+        area_kitchen = data[data["area_living"].notna()]
+        area_kitchen_fraction = (
+            area_kitchen["area_kitchen"] / area_kitchen["area_total"]).mean()
+        data["district"] = data["district"].fillna(-1)
         for i, row in data.iterrows():
             key = str(
                 int(row["district"] if not np.isnan(row["district"]) else -1))
@@ -224,32 +247,22 @@ class Preprocessor:
             if np.isnan(row["longitude"]):
                 data["longitude"][i] = district_average[key]["lon"]
             if np.isnan(row["area_kitchen"]):
-                data["area_kitchen"][i] = district_average[key]["area_kitchen"]
+                data["area_kitchen"][i] = area_kitchen_fraction * \
+                    data["area_total"][i]
             if np.isnan(row["area_living"]):
-                data["area_living"][i] = district_average[key]["area_living"]
+                data["area_living"][i] = area_living_fraction * \
+                    data["area_total"][i]
             if np.isnan(row["bathrooms_shared"]):
                 data["bathrooms_shared"][i] = district_average[key]["bathrooms_shared"]
             if np.isnan(row["bathrooms_private"]):
                 data["bathrooms_private"][i] = district_average[key]["bathrooms_private"]
-            if np.isnan(row["ceiling"]):
-                data["ceiling"][i] = district_average[key]["ceiling"]
             if np.isnan(row["phones"]):
                 data["phones"][i] = district_average[key]["phones"]
             if np.isnan(row["constructed"]):
                 data["constructed"][i] = district_average[key]["constructed"]
-        data['distance_center'] = [self.distance(
-            data["latitude"][i], data["longitude"][i]) for i in range(len(data["latitude"]))]
         data["seller"] = data["seller"].fillna(data["seller"].mode()[0])
-        data["windows_court"] = data["windows_court"].fillna(
-            data["windows_court"].mode()[0])
-        data["windows_street"] = data["windows_street"].fillna(
-            data["windows_street"].mode()[0])
-        data["balconies"] = data["balconies"].fillna(
-            data["balconies"].mode()[0])
-        data["loggias"] = data["loggias"].fillna(data["loggias"].mode()[0])
-        data["condition"] = data["condition"].fillna(
-            data["condition"].mode()[0])
-        data["district"] = data["district"].fillna(data["district"].mode()[0])
+        data["windows_court"] = data["windows_court"].fillna(-1)
+        data["windows_street"] = data["windows_street"].fillna(-1)
         data["new"] = data["new"].fillna(data["new"].mode()[0])
         data["material"] = data["material"].fillna(data["material"].mode()[0])
         data["elevator_without"] = data["elevator_without"].fillna(
@@ -264,15 +277,33 @@ class Preprocessor:
         data["heating"] = data["heating"].fillna(data["heating"].mode()[0])
         return data
 
+    def remove_zero_values(self, data, key):
+        for i, row in data.iterrows():
+            if row[key] == 0:
+                data[key][i] = self.district_avg_dict[str(
+                    int(row["district"]))][key]
+        return data
+
     def general_removal(self, data):
         data = self.remove_labels(
-            data.copy(), ["layout", "street", "address", "id", "building_id"])
+            data, ["layout", "ceiling", "balconies", "loggias", "condition", "street", "address"])
+        return data
+
+    def fix_latlon_outliers(self, data, outliers):
+        for _, row in outliers.iterrows():
+            data["latitude"][row["id"]] = self.district_avg_dict["4"]["lat"]
+            data["longitude"][row["id"]] = self.district_avg_dict["4"]["lon"]
         return data
 
     def remove_redundant_features(self, data):
         return data
 
-    def distance(self, lat, lon, lat_to=55.753649, lon_to=37.621067):
+    def combine_latlon(self, data):
+        data["distance_center"] = [self.distance(
+            data["latitude"][i], data["longitude"][i]) for i in range(len(data["latitude"]))]
+        return data
+
+    def distance(self, lat, lon, lat_to=55.754093, lon_to=37.620407):
         radius = 6373000.0  # Earth radius in meters
         lat = radians(lat)
         lon = radians(lon)
@@ -318,4 +349,4 @@ def main():
     p.preprocess(p.merged)
 
 
-#main()
+# main()
