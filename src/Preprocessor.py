@@ -265,8 +265,6 @@ class Preprocessor:
         data["windows_street"] = data["windows_street"].fillna(-1)
         data["new"] = data["new"].fillna(data["new"].mode()[0])
         data["material"] = data["material"].fillna(data["material"].mode()[0])
-        data["elevator_without"] = data["elevator_without"].fillna(
-            data["elevator_without"].mode()[0])
         data["elevator_passenger"] = data["elevator_passenger"].fillna(
             data["elevator_passenger"].mode()[0])
         data["elevator_service"] = data["elevator_service"].fillna(
@@ -286,7 +284,7 @@ class Preprocessor:
 
     def general_removal(self, data):
         data = self.remove_labels(
-            data, ["layout", "ceiling", "balconies", "loggias", "condition", "street", "address"])
+            data, ["layout", "ceiling", "balconies", "loggias", "condition", "elevator_without", "street", "address"])
         return data
 
     def fix_latlon_outliers(self, data, outliers):
@@ -301,6 +299,26 @@ class Preprocessor:
     def combine_latlon(self, data):
         data["distance_center"] = [self.distance(
             data["latitude"][i], data["longitude"][i]) for i in range(len(data["latitude"]))]
+        return data
+
+    def combine_elevators(self, data):
+        has_elevator = []
+        for _, row in data.iterrows():
+            has1 = row["elevator_passenger"] == 1
+            has2 = row["elevator_service"] == 1
+            if has1 and has2:
+                has_elevator.append(2)
+            elif has1 or has2:
+                has_elevator.append(1)
+            else:
+                has_elevator.append(0)
+        data["has_elevator"] = has_elevator
+        return data
+
+    def redo_new(self, data):
+        is_new = [1 if row["constructed"] >=
+                  2018 else 0 for _, row in data.iterrows()]
+        data["new"] = is_new
         return data
 
     def distance(self, lat, lon, lat_to=55.754093, lon_to=37.620407):
@@ -327,21 +345,6 @@ class Preprocessor:
             'id'), how='left', left_on='building_id', right_index=True)
         result.to_csv("../dataset/merged.csv", index=False)
         return result
-
-    def preprocess(self, data, test=False):
-        data = self.logify(data.copy(), "price")
-        data = self.logify(data, "area_total")
-        data = self.logify(data, "area_living")
-        data = self.logify(data, "area_kitchen")
-        #data = self.find_rich_neighboors(data, test=test)
-        data = self.remove_redundant_features(data)
-        #data = self.combine_area_rooms(data)
-        data = self.combine_baths(data)
-        #data = self.combine_windows(data)
-        data = self.relative_floor(data)
-        data = self.remove_labels(
-            data, labels=["bathrooms_private", "bathrooms_shared", "latitude", "longitude"])
-        return data
 
 
 def main():
