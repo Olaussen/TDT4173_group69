@@ -13,7 +13,7 @@ from tensorflow.keras import backend as K
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_squared_log_error
 from Preprocessor import Preprocessor
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import RepeatedKFold
@@ -47,20 +47,28 @@ class TestModel:
     """
 
     def fit(self):
-        EPOCHS = 250
-        BATCH_SIZE = 10
-
-
-
         estimators = []
         estimators.append(('standardize', StandardScaler()))
+        # Set paramters for Grid Search
+       # param_grid = {'n_estimators': [200, 300, 400, 500, 600],
+        # 'max_features': [0.1, 0.3, 0.6]
+        # }
+        # Initialise the random forest model
+        #rf = RandomForestRegressor(n_jobs=-1, random_state=0, bootstrap=True)
+
+        # Initialise Gridsearch CV with 5 fold corssvalidation and neggative root_mean_squared_error
+        # tuned_rf = GridSearchCV(
+        # estimator=rf, param_grid=param_grid, scoring='neg_root_mean_squared_error', cv=5, verbose=2)
 
         #rf = RandomForestRegressor(max_features="auto", min_samples_leaf=1, min_samples_split=2, n_estimators=300, verbose=2)
         #estimators.append(('rfr', rf))
+        #gr = GradientBoostingRegressor(n_estimators=500, learning_rate=0.5)
+        #estimators.append(("gradient", gr))
         boost = xgboost.XGBRegressor(base_score=0.5, colsample_bylevel=1, colsample_bytree=0.4, gamma=0, learning_rate=0.07, max_delta_step=0, max_depth=3, min_child_weight=1.5,
-                                     missing=None, n_estimators=10000, nthread=-1, objective='reg:squarederror', reg_alpha=0.75, reg_lambda=0.45, scale_pos_weight=1, seed=42, subsample=0.6)
+                                     n_estimators=10000, nthread=-1, objective='reg:squarederror', reg_alpha=0.75, reg_lambda=0.45, scale_pos_weight=1, seed=42, subsample=0.6)
         estimators.append(("boost", boost))
         self.model = Pipeline(estimators)
+        #self.model = rf
         return self.model.fit(self.x_train, self.y_train)
         #print("Best params:", grid_search.best_params_)
 

@@ -2,8 +2,10 @@ from numpy.core.numeric import NaN
 import pandas as pd
 import numpy as np
 from math import sin, cos, sqrt, atan2, radians
-from sklearn.impute import SimpleImputer
 from pickle import dump, load
+
+from pandas.core.base import DataError
+from sklearn.preprocessing import OneHotEncoder
 pd.options.mode.chained_assignment = None  # default='warn'
 
 APARTMENTS_TRAIN = "../dataset/apartments_train.csv"
@@ -66,21 +68,12 @@ class Preprocessor:
             non_district["district"][i] = best
         return non_district
 
-    def split_categorical_features(self):
-        train = self.remove_NaNs(self.merged.copy())
-        test = self.remove_NaNs(self.merged_test.copy())
-        train = self.general_removal(train)
-        test = self.general_removal(test)
-        final_df = pd.concat([train, test], axis=0)
-        categorical = ["seller", "district", "parking",
-                       "condition", "heating", "material"]
-        df_final = final_df.copy()
+    def split_categorical_features(self, data, columns):
         i = 0
-        for field in categorical:
-
+        for field in columns:
             df1 = pd.get_dummies(
-                final_df[field], drop_first=True, prefix=categorical[i])
-            final_df.drop([field], axis=1, inplace=True)
+                data[field], drop_first=True, prefix=columns[i])
+            data.drop([field], axis=1, inplace=True)
 
             if i == 0:
                 df_final = df1.copy()
@@ -88,7 +81,7 @@ class Preprocessor:
                 df_final = pd.concat([df_final, df1], axis=1)
             i = i + 1
 
-        df_final = pd.concat([final_df, df_final], axis=1)
+        df_final = pd.concat([data, df_final], axis=1)
         return df_final
 
     def district_avg(self, data):
@@ -260,19 +253,16 @@ class Preprocessor:
                 data["phones"][i] = district_average[key]["phones"]
             if np.isnan(row["constructed"]):
                 data["constructed"][i] = district_average[key]["constructed"]
-        data["seller"] = data["seller"].fillna(data["seller"].mode()[0])
+        data["seller"] = data["seller"].fillna(-1)
         data["windows_court"] = data["windows_court"].fillna(-1)
         data["windows_street"] = data["windows_street"].fillna(-1)
-        data["new"] = data["new"].fillna(data["new"].mode()[0])
-        data["material"] = data["material"].fillna(data["material"].mode()[0])
-        data["elevator_passenger"] = data["elevator_passenger"].fillna(
-            data["elevator_passenger"].mode()[0])
-        data["elevator_service"] = data["elevator_service"].fillna(
-            data["elevator_service"].mode()[0])
-        data["parking"] = data["parking"].fillna(data["parking"].mode()[0])
-        data["garbage_chute"] = data["garbage_chute"].fillna(
-            data["garbage_chute"].mode()[0])
-        data["heating"] = data["heating"].fillna(data["heating"].mode()[0])
+        data["new"] = data["new"].fillna(-1)
+        data["material"] = data["material"].fillna(-1)
+        data["elevator_passenger"] = data["elevator_passenger"].fillna(-1)
+        data["elevator_service"] = data["elevator_service"].fillna(-1)
+        data["parking"] = data["parking"].fillna(-1)
+        data["garbage_chute"] = data["garbage_chute"].fillna(-1)
+        data["heating"] = data["heating"].fillna(-1)
         return data
 
     def remove_zero_values(self, data, key):
@@ -352,4 +342,4 @@ def main():
     p.preprocess(p.merged)
 
 
-# main()
+#main()
