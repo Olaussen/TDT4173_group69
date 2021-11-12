@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from math import sin, cos, sqrt, atan2, radians
 from pickle import dump, load
+from scipy import stats
 
 from pandas.core.base import DataError
 from sklearn.preprocessing import OneHotEncoder
@@ -50,7 +51,27 @@ class Preprocessor:
             data[label] = np.expm1(
                 data[label]) if inverse else np.log1p(data[label])
         return data
-
+    
+    def squareify(self, data, label, inverse=False):
+        if label in data.columns:
+            data[label] = np.exp2(
+                data[label]) if inverse else np.sqrt(data[label])
+        return data
+    
+    def skew_fix(self,data,label, inverse=False):
+        if label in data.columns:
+            data[label] = stats.boxcox(data[label])
+        return data
+    def combine_floor_stories(self,data):
+        data["floor_stories"] = data["floor"]/data["stories"]
+        return data
+    def combine_new_constructed_distance(self,data):
+        data["scaled_constructed"] = data["constructed"]*data["new"]
+        for i in data.index:
+            if data.at[i,"scaled_constructed"] == 0:
+                data.at[i,"scaled_constructed"] = data.at[i,"constructed"]*0.70
+        return data
+    
     def get_closest_district(self, data, non_district):
         copy = data.copy()[data["district"].notna()]
         for i, row in non_district.iterrows():
