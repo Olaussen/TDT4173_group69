@@ -60,12 +60,16 @@ class TestModel:
         # tuned_rf = GridSearchCV(
         # estimator=rf, param_grid=param_grid, scoring='neg_root_mean_squared_error', cv=5, verbose=2)
 
-        #rf = RandomForestRegressor(max_features="auto", min_samples_leaf=1, min_samples_split=2, n_estimators=300, verbose=2)
+        #rf = RandomForestRegressor(bootstrap=True,
+                                   #max_depth=40,
+                                   #max_features='auto',
+                                   #min_samples_leaf=2,
+                                   #min_samples_split=5,
+                                   #n_estimators=100, verbose=2)
         #estimators.append(('rfr', rf))
         #gr = GradientBoostingRegressor(n_estimators=500, learning_rate=0.5)
         #estimators.append(("gradient", gr))
-        boost = xgboost.XGBRegressor(base_score=0.5, colsample_bylevel=1, colsample_bytree=0.4, gamma=0, learning_rate=0.07, max_delta_step=0, max_depth=3, min_child_weight=1.5,
-                                     n_estimators=10000, nthread=-1, objective='reg:squarederror', reg_alpha=0.75, reg_lambda=0.45, scale_pos_weight=1, seed=42, subsample=0.6)
+        boost = xgboost.XGBRegressor(learning_rate=0.12, n_estimators=500, objective='reg:squarederror')
         estimators.append(("boost", boost))
         self.model = Pipeline(estimators)
         #self.model = rf
