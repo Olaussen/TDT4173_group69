@@ -18,6 +18,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import RepeatedKFold
 import xgboost
+from flaml import AutoML
 
 
 class TestModel:
@@ -69,7 +70,7 @@ class TestModel:
         #estimators.append(('rfr', rf))
         #gr = GradientBoostingRegressor(n_estimators=500, learning_rate=0.5)
         #estimators.append(("gradient", gr))
-        boost = xgboost.XGBRegressor(learning_rate=0.14, n_estimators=300, objective='reg:squarederror')
+        boost = xgboost.XGBRegressor(learning_rate=0.30, n_estimators=500, objective='reg:squarederror')
         estimators.append(("boost", boost))
         self.model = Pipeline(estimators)
         #self.model = rf
@@ -100,6 +101,23 @@ class TestModel:
     """
         RMSLE (Root mean squared log error) - used as a loss function for the model
     """
+    def autoMLfit(self,x_train,y_train,estimator_list = ["xgboost"]):
+        automl_settings = {
+            "time_budget": 150,  # in seconds
+            "metric": 'r2',
+            "task": 'regression',
+            "log_file_name": "lmaoxd.log",
+            "estimator_list": estimator_list
+}
+        automl = AutoML()
+        self.model = automl
+        return self.model.fit(x_train, y_train,**automl_settings)
+    
+    def autoMLpredict(self,x_test):
+        return self.model.predict(x_test)
+    
+    def autoML_print_best_model(self):
+        print(self.model.model.estimator)
 
     def loss(self, y_true, y_pred):
         msle = tf.keras.losses.MeanSquaredLogarithmicError()
