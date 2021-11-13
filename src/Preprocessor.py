@@ -62,16 +62,27 @@ class Preprocessor:
         if label in data.columns:
             data[label] = stats.boxcox(data[label])
         return data
+    
     def combine_floor_stories(self,data):
-        data["floor_stories"] = data["floor"]/data["stories"]
+        data["floor_stories"] = data["floor"]*data["stories"]
         return data
+    
     def combine_new_constructed_distance(self,data):
         data["scaled_constructed"] = data["constructed"]*data["new"]
         for i in data.index:
             if data.at[i,"scaled_constructed"] == 0:
                 data.at[i,"scaled_constructed"] = data.at[i,"constructed"]*0.70
         return data
-    
+    def combine_district_city_center(self,data):
+        data["district_distance"] = data["district"]*data["distance_center"]
+        return data
+    def combine_area_total_city_center(self,data):
+        data["area_total_distance"] = data["area_total"]*data["distance_center"]
+        return data
+    def combine_district_bathroom_amount(self,data):
+        data["district_bath_amount"] = data["district"]*data["bathroom_amount"]
+        return data
+        
     def get_closest_district(self, data, non_district):
         copy = data.copy()[data["district"].notna()]
         for i, row in non_district.iterrows():

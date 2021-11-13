@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn import metrics
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
@@ -19,7 +20,6 @@ from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import RepeatedKFold
 import xgboost
 from flaml import AutoML
-
 
 class TestModel:
 
@@ -70,7 +70,7 @@ class TestModel:
         #estimators.append(('rfr', rf))
         #gr = GradientBoostingRegressor(n_estimators=500, learning_rate=0.5)
         #estimators.append(("gradient", gr))
-        boost = xgboost.XGBRegressor(learning_rate=0.30, n_estimators=500, objective='reg:squarederror')
+        boost = xgboost.XGBRegressor(learning_rate=0.14, n_estimators=200, objective='reg:squarederror',eva_metric="rmlse")
         estimators.append(("boost", boost))
         self.model = Pipeline(estimators)
         #self.model = rf
@@ -101,13 +101,14 @@ class TestModel:
     """
         RMSLE (Root mean squared log error) - used as a loss function for the model
     """
-    def autoMLfit(self,x_train,y_train,estimator_list = ["xgboost"],time = 10):
+    def autoMLfit(self,x_train,y_train,estimator_list = ["xgboost"],time = 10,metric="mse",ensemble=False):
         automl_settings = {
             "time_budget": time,  # in seconds
-            "metric": 'r2',
+            "metric": metric,
             "task": 'regression',
             "log_file_name": "lmaoxd.log",
-            "estimator_list": estimator_list
+            "estimator_list": estimator_list,
+            "ensemble": ensemble,
 }
         automl = AutoML()
         self.model = automl
@@ -117,7 +118,10 @@ class TestModel:
         return self.model.predict(x_test)
     
     def autoML_print_best_model(self):
-        print(self.model.model.estimator)
+        print("best model",self.model.best_estimator)
+        print("configs",self.model.best_config)
+        
+
 
     def loss(self, y_true, y_pred):
         msle = tf.keras.losses.MeanSquaredLogarithmicError()
