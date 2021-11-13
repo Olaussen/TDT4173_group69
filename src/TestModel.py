@@ -101,9 +101,9 @@ class TestModel:
     """
         RMSLE (Root mean squared log error) - used as a loss function for the model
     """
-    def autoMLfit(self,x_train,y_train,estimator_list = ["xgboost"]):
+    def autoMLfit(self,x_train,y_train,estimator_list = ["xgboost"],time = 10):
         automl_settings = {
-            "time_budget": 150,  # in seconds
+            "time_budget": time,  # in seconds
             "metric": 'r2',
             "task": 'regression',
             "log_file_name": "lmaoxd.log",
