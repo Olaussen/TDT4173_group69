@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
 from sklearn.feature_selection import VarianceThreshold
 from tensorflow.keras import backend as K
 from sklearn.pipeline import Pipeline
@@ -20,6 +20,18 @@ from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import RepeatedKFold
 import xgboost
 from flaml import AutoML
+
+def root_mean_squared_log_error(y_true, y_pred):
+    return mean_squared_log_error(y_true, y_pred) ** 0.5
+
+def custom_metric(X_test, y_test, estimator, labels, X_train, y_train,
+                  weight_test=None, weight_train=None,config=None, groups_test=None, groups_train=None): 
+    y_pred = estimator.predict(X_test)
+    test_loss = root_mean_squared_log_error(y_test, y_pred)
+    y_pred = estimator.predict(X_train)
+    train_loss = root_mean_squared_log_error(y_train, y_pred)
+    alpha = 0.5
+    return test_loss * (1 + alpha) - alpha * train_loss, {}
 
 class TestModel:
 
@@ -49,7 +61,7 @@ class TestModel:
 
     def fit(self):
         estimators = []
-        estimators.append(('standardize', StandardScaler()))
+        estimators.append(('standardize', RobustScaler()))
         # Set paramters for Grid Search
        # param_grid = {'n_estimators': [200, 300, 400, 500, 600],
         # 'max_features': [0.1, 0.3, 0.6]
@@ -70,7 +82,7 @@ class TestModel:
         #estimators.append(('rfr', rf))
         #gr = GradientBoostingRegressor(n_estimators=500, learning_rate=0.5)
         #estimators.append(("gradient", gr))
-        boost = xgboost.XGBRegressor(learning_rate=0.14, n_estimators=200, objective='reg:squarederror',eva_metric="rmlse")
+        boost = xgboost.XGBRegressor(learning_rate=0.14, n_estimators=100, objective='reg:squarederror',eva_metric="rmlse")
         estimators.append(("boost", boost))
         self.model = Pipeline(estimators)
         #self.model = rf
@@ -101,7 +113,7 @@ class TestModel:
     """
         RMSLE (Root mean squared log error) - used as a loss function for the model
     """
-    def autoMLfit(self,x_train,y_train,estimator_list = ["xgboost"],time = 10,metric="mse",ensemble=False):
+    def autoMLfit(self,x_train,y_train,estimator_list = ["xgboost"],time = 10,metric=custom_metric,ensemble=False):
         automl_settings = {
             "time_budget": time,  # in seconds
             "metric": metric,

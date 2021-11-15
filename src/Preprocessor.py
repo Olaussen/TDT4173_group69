@@ -51,6 +51,11 @@ class Preprocessor:
             data[label] = np.expm1(
                 data[label]) if inverse else np.log1p(data[label])
         return data
+    def log2ify(self, data, label, inverse=False):
+        if label in data.columns:
+            data[label] = np.exp2(
+                data[label]) if inverse else np.log2(data[label])
+        return data
     
     def squareify(self, data, label, inverse=False):
         if label in data.columns:
@@ -82,7 +87,40 @@ class Preprocessor:
     def combine_district_bathroom_amount(self,data):
         data["district_bath_amount"] = data["district"]*data["bathroom_amount"]
         return data
-        
+    def square_diff(self,data):
+        data["square_diff"] = data["area_total"]-(data["area_kitchen"])
+        return data
+    def rich_square(self,data):
+        data["richy_square_score"] = 10000
+        for i in data.index:
+            # richy rich square
+            if ((55.7<=data.at[i,"latitude"]<=55.8) and (37.5<=data.at[i,"longitude"]<=37.68)):
+                data.at[i,"richy_square_score"] = 1
+            elif((55.7<=data.at[i,"latitude"]<=55.8) and (37.39<=data.at[i,"longitude"]<=37.49)):
+                data["richy_square_score"] = 2
+            elif((55.64<=data.at[i,"latitude"]<=55.7) and (37.42<=data.at[i,"longitude"]<=37.585)):
+                data.at[i,"richy_square_score"] = 7
+            elif((55.65<=data.at[i,"latitude"]<=56.0) and (37.2<=data.at[i,"longitude"]<=37.78)):
+                data.at[i,"richy_square_score"] = 1000
+        return data    
+    def closest_hospital(self, data):
+        with open("hospitals.txt", "r+") as file:
+            lines = file.readlines()
+            coords = [(float(line.split(",")[0]), float(line.split(",")[1])) for line in lines]
+            hospitals = []
+        for _, row in data.iterrows():
+            closest = float("inf")
+            for hospital in coords:
+                distance = self.distance(row["latitude"], row["longitude"], hospital[0], hospital[1])
+                if distance < closest:
+                    closest = distance
+            hospitals.append(np.log10(closest))
+        data["closest_hospital"] = hospitals
+        return data
+    def area_score(self,data):
+        data["area_score"] = (np.log2(data["distance_center"]))/((data["area_total"]+(data["area_living"])+data["area_kitchen"]))
+        return data
+    
     def get_closest_district(self, data, non_district):
         copy = data.copy()[data["district"].notna()]
         for i, row in non_district.iterrows():
@@ -185,14 +223,23 @@ class Preprocessor:
         return data
 
     def combine_baths(self, data):
-        data["bathroom_amount"] = data["bathrooms_private"] + \
-            data["bathrooms_shared"]
+        data["bathroom_amount"] = data["bathrooms_private"]+data["bathrooms_shared"]
+        return data
+    
+    def bathroom_fraction(self, data):
+        data["bathroom_fraction"] = data["bathroom_amount"]/data["area_total"]
         return data
 
     def relative_floor(self, data):
         data["relative_floor"] = data["stories"] * data["floor"]
         return data
-
+    def lat_long_fraction(self, data):
+        data["lat_lon_frac"] = data["longitude"]-data["latitude"]
+        return data
+    def apartment_score(self, data):
+        data["apartment_score"] = (data["has_elevator"]+data["windows_street"]+data["windows_court"]+data["parking"]+data["heating"]+data["phones"]+data["bathroom_amount"]+(data["floor"]/data["stories"]))
+        return data
+    
     """def find_rich_neighboors(self, data):
         rich = 16.651093950010974
         rich_neighboors = []
@@ -321,6 +368,22 @@ class Preprocessor:
     def combine_latlon(self, data):
         data["distance_center"] = [self.distance(
             data["latitude"][i], data["longitude"][i]) for i in range(len(data["latitude"]))]
+        return data
+    
+    def combine_latlon_subway(self, data,subway_table,read_from_file=True):
+        if(not read_from_file):
+            data["closest_subway_distance"] = 0 
+            for i in data.index:
+                closest = float("inf")
+                for j in (subway_table.index):
+                    sub_way_distance = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],subway_table.at[j,"latitude"],subway_table.at[j,"longitude"])
+                    if(sub_way_distance < closest):
+                        closest = sub_way_distance
+                data.at[i,"closest_subway_distance"] = closest
+            save_to_file = pd.DataFrame(data["closest_subway_distance"])
+            save_to_file.to_csv("./closest_subway_distance.csv",index=False)
+        else:
+            data["closest_subway_distance"]= pd.read_csv("./closest_subway_distance.csv")
         return data
 
     def combine_elevators(self, data):
