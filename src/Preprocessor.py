@@ -59,7 +59,7 @@ class Preprocessor:
             for _, check in copy.iterrows():
                 distance = self.distance(
                     row["latitude"], row["longitude"], check["latitude"], check["longitude"])
-                if distance < 250:
+                if distance < 150:
                     data["district"][i] = check["district"]
                     break
                 if distance < closest:

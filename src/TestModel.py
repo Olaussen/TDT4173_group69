@@ -18,6 +18,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import RepeatedKFold
 import xgboost
+import lightgbm as lgbm
 
 
 class TestModel:
@@ -49,8 +50,9 @@ class TestModel:
     def fit(self):
         estimators = []
         estimators.append(('standardize', StandardScaler()))
+        estimators.append(('selector', VarianceThreshold()))
         # Set paramters for Grid Search
-       # param_grid = {'n_estimators': [200, 300, 400, 500, 600],
+        # param_grid = {'n_estimators': [200, 300, 400, 500, 600],
         # 'max_features': [0.1, 0.3, 0.6]
         # }
         # Initialise the random forest model
@@ -60,26 +62,87 @@ class TestModel:
         # tuned_rf = GridSearchCV(
         # estimator=rf, param_grid=param_grid, scoring='neg_root_mean_squared_error', cv=5, verbose=2)
 
-        #rf = RandomForestRegressor(bootstrap=True,
-                                   #max_depth=40,
-                                   #max_features='auto',
-                                   #min_samples_leaf=2,
-                                   #min_samples_split=5,
-                                   #n_estimators=100, verbose=2)
+        # rf = RandomForestRegressor(bootstrap=True,
+        # max_depth=40,
+        # max_features='auto',
+        # min_samples_leaf=2,
+        # min_samples_split=5,
+        # n_estimators=100, verbose=2)
         #estimators.append(('rfr', rf))
         #gr = GradientBoostingRegressor(n_estimators=500, learning_rate=0.5)
         #estimators.append(("gradient", gr))
-        boost = xgboost.XGBRegressor(learning_rate=0.12, n_estimators=500, objective='reg:squarederror')
+        params = {'n_estimators': 1168, 'num_leaves': 118, 'min_child_samples': 7, 'learning_rate': 0.08071528250529435,
+                  'log_max_bin': 10, 'colsample_bytree': 0.662586923419352, 'reg_alpha': 0.0031039225181313645, 'reg_lambda': 0.05061507015311157}
+        boost = xgboost.XGBRegressor(**params)
         estimators.append(("boost", boost))
         self.model = Pipeline(estimators)
         #self.model = rf
         return self.model.fit(self.x_train, self.y_train)
         #print("Best params:", grid_search.best_params_)
 
+    def keras_mlp_model(self, epochs=100, batch_size=10, verbose=0):
+        estimators = []
+        estimators.append(('standardize', StandardScaler()))
+        estimators.append(('selector', VarianceThreshold()))
+        estimators.append(('mlp', KerasRegressor(
+            build_fn=self.generate_model, epochs=epochs, batch_size=batch_size, verbose=verbose)))
+        return Pipeline(estimators)
+
+    def randomforest_model(self):
+        estimators = []
+        estimators.append(('standardize', StandardScaler()))
+        estimators.append(('selector', VarianceThreshold()))
+        rf = RandomForestRegressor()
+        estimators.append(('rf', rf))
+        return Pipeline(estimators)
+
+    def xgboost_model(self):
+        estimators = []
+        estimators.append(('standardize', StandardScaler()))
+        estimators.append(('selector', VarianceThreshold()))
+        boost = xgboost.XGBRegressor()
+        estimators.append(('boost', boost))
+        return Pipeline(estimators)
+
+    def lgbm_model(self):
+        estimators = []
+        estimators.append(('standardize', StandardScaler()))
+        estimators.append(('selector', VarianceThreshold()))
+        lightgbm = lgbm.LGBMRegressor()
+        estimators.append(('lgbm', lightgbm))
+        return Pipeline(estimators)
+
+    def start_rf_search(self, params, load=False):
+        if load:
+            return None
+        else:
+            rf = RandomForestRegressor()
+            finished = GridSearchCV(
+                estimator=rf, param_grid =params, cv=3, verbose=2, n_jobs=-1)
+            return finished
+
+    def start_xgboost_search(self, params, load=False):
+        if load:
+            return None
+        else:
+            boost = xgboost.XGBRegressor()
+            finished = GridSearchCV(
+                estimator=boost, param_grid=params, cv=3, verbose=2, n_jobs=-1)
+            return finished
+
+    def start_lgbm_search(self, params, load=False):
+        if load:
+            return None
+        else:
+            lg = lgbm.LGBMRegressor()
+            finished = GridSearchCV(
+                estimator=lg, param_grid=params, cv=3, verbose=2, n_jobs=-1)
+            return finished
+
+            
     """
         Predicts the prices for the given data
     """
-
     def predict(self, data):
         return self.model.predict(data)
 
@@ -90,11 +153,12 @@ class TestModel:
     def generate_model(self):
         model = tf.keras.models.Sequential()
         model.add(tf.keras.layers.Dense(
-            units=50, input_dim=self.x_train.shape[1], activation="relu"))
-        model.add(tf.keras.layers.Dense(units=25, activation="relu"))
-        model.add(tf.keras.layers.Dense(units=50, activation="relu"))
+            units=64, activation="relu"))
+        model.add(tf.keras.layers.Dense(units=128, activation="relu"))
+        model.add(tf.keras.layers.Dense(units=128, activation="relu"))
+        model.add(tf.keras.layers.Dense(units=64, activation="relu"))
         model.add(tf.keras.layers.Dense(units=1))
-        model.compile(optimizer='adam', loss=self.root_mean_squared_log_error)
+        model.compile(optimizer='adam', loss=self.loss)
         return model
 
     """
