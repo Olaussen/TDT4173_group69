@@ -336,6 +336,20 @@ class Preprocessor:
         result.to_csv("../dataset/merged.csv", index=False)
         return result
 
+    def closest_hospital(self, data):
+        with open("hospitals.txt", "r+") as file:
+            lines = file.readlines()
+            coords = [(float(line.split(",")[0]), float(line.split(",")[1])) for line in lines]
+            hospitals = []
+        for _, row in data.iterrows():
+            closest = float("inf")
+            for hospital in coords:
+                distance = self.distance(row["latitude"], row["longitude"], hospital[0], hospital[1])
+                if distance < closest:
+                    closest = distance
+            hospitals.append(np.log10(closest))
+        data["closest_hospital"] = hospitals
+        return data
 
 def main():
     p = Preprocessor()
