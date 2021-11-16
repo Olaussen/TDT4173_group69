@@ -20,6 +20,7 @@ from sklearn.model_selection import RepeatedKFold
 import xgboost
 import lightgbm as lgbm
 from flaml import AutoML
+import json
 
 
 def root_mean_squared_log_error(y_true, y_pred):
@@ -129,7 +130,9 @@ class TestModel:
 
     def start_rf_search(self, params, load=False):
         if load:
-            return None
+            with open("rf_best.json", "r+") as file:
+                best = json.load(file)
+            return RandomForestRegressor(**best)
         else:
             rf = RandomForestRegressor()
             finished = GridSearchCV(
@@ -138,7 +141,9 @@ class TestModel:
 
     def start_xgboost_search(self, params, load=False):
         if load:
-            return None
+            with open("boost_best.json", "r+") as file:
+                best = json.load(file)
+            return xgboost.XGBRegressor(**best)
         else:
             boost = xgboost.XGBRegressor()
             finished = GridSearchCV(
@@ -147,7 +152,9 @@ class TestModel:
 
     def start_lgbm_search(self, params, load=False):
         if load:
-            return None
+            with open("lgbm_best.json", "r+") as file:
+                best = json.load(file)
+            return lgbm.LGBMRegressor(**best)
         else:
             lg = lgbm.LGBMRegressor()
             finished = GridSearchCV(
