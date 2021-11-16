@@ -82,7 +82,7 @@ class TestModel:
         #estimators.append(('rfr', rf))
         #gr = GradientBoostingRegressor(n_estimators=500, learning_rate=0.5)
         #estimators.append(("gradient", gr))
-        boost = xgboost.XGBRegressor(learning_rate=0.14, n_estimators=100, objective='reg:squarederror',eva_metric="rmlse")
+        boost = xgboost.XGBRegressor(learning_rate=0.10, n_estimators=1000, objective='reg:squarederror',eva_metric="rmlse")
         estimators.append(("boost", boost))
         self.model = Pipeline(estimators)
         #self.model = rf

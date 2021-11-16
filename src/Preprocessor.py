@@ -117,8 +117,9 @@ class Preprocessor:
             hospitals.append(np.log10(closest))
         data["closest_hospital"] = hospitals
         return data
+
     def area_score(self,data):
-        data["area_score"] = (np.log2(data["distance_center"]))/((data["area_total"]+(data["area_living"])+data["area_kitchen"]))
+        data["area_score"] = data["area_total"]/((data["district"]+2)**2)
         return data
     
     def get_closest_district(self, data, non_district):
@@ -217,7 +218,7 @@ class Preprocessor:
         return districts
 
     def combine_area_rooms(self, data):
-        data["avg_room_size"] = data["area_total"] / data["rooms"]
+        data["avg_room_size"] = data["area_total"] / (data["rooms"]**3)
         data["living_fraction"] = data["area_living"] / data["area_total"]
         data["kitchen_fraction"] = data["area_kitchen"] / data["area_total"]
         return data
