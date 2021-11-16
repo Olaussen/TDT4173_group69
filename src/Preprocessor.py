@@ -302,6 +302,27 @@ class Preprocessor:
     def distance_from_golden_mile(self,data):
         data["distance_golden_mile"] = [self.distance(data["latitude"][i], data["longitude"][i],55.7391511539523, 37.59601968052924) for i in range(len(data["latitude"]))]
         return data
+    
+    def inside_khamovniki(self,data):
+        data["inside_khamovniki"] = 0
+        centers = [(55.72080955799734, 37.56532305228938),(55.733461209237284, 37.57853367452259),(55.74283408846054, 37.60129837589054),(55.740730168657976, 37.57700470204264)]
+        rad1 = 1.45
+        rad2 = 0.6
+        # km
+        radius = 0.65
+        for i in data.index:
+            distance_from_center1 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[0][0],centers[0][1])
+            distance_from_center2 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[1][0],centers[1][1])
+            distance_from_center3 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[2][0],centers[2][1])
+            distance_from_center4 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[3][0],centers[3][1])
+            if((distance_from_center1<= rad1)or(distance_from_center2<= rad2)or(distance_from_center3<= rad2)or(distance_from_center4<= rad2)):
+                data.at[i,"inside_khamovniki"] = 1
+        return data
+    
+    def distance_from_khamovniki_center(self,data):
+        data["distance_khamovniki_center"] = [self.distance(data["latitude"][i], data["longitude"][i],55.733829823959425, 37.57598361150507) for i in range(len(data["latitude"]))]
+        return data
+    
     """def find_rich_neighboors(self, data):
         rich = 16.651093950010974
         rich_neighboors = []
