@@ -19,6 +19,21 @@ from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import RepeatedKFold
 import xgboost
 import lightgbm as lgbm
+from flaml import AutoML
+
+
+def root_mean_squared_log_error(y_true, y_pred):
+    return mean_squared_log_error(y_true, y_pred) ** 0.5
+
+
+def custom_metric(X_test, y_test, estimator, labels, X_train, y_train,
+                  weight_test=None, weight_train=None, config=None, groups_test=None, groups_train=None):
+    y_pred = estimator.predict(X_test)
+    test_loss = root_mean_squared_log_error(y_test, y_pred)
+    y_pred = estimator.predict(X_train)
+    train_loss = root_mean_squared_log_error(y_train, y_pred)
+    alpha = 0.5
+    return test_loss * (1 + alpha) - alpha * train_loss, {}
 
 
 class TestModel:
@@ -118,7 +133,7 @@ class TestModel:
         else:
             rf = RandomForestRegressor()
             finished = GridSearchCV(
-                estimator=rf, param_grid =params, cv=3, verbose=2, n_jobs=-1)
+                estimator=rf, param_grid=params, cv=3, verbose=2, n_jobs=-1)
             return finished
 
     def start_xgboost_search(self, params, load=False):
@@ -139,10 +154,30 @@ class TestModel:
                 estimator=lg, param_grid=params, cv=3, verbose=2, n_jobs=-1)
             return finished
 
-            
+    def autoMLfit(self, x_train, y_train, estimator_list=["xgboost", "lgbm", "rf"], time=10, metric=custom_metric, ensemble=False):
+        automl_settings = {
+            "time_budget": time,  # in seconds
+            "metric": metric,
+            "task": 'regression',
+            "log_file_name": "lmaoxd.log",
+            "estimator_list": estimator_list,
+            "ensemble": ensemble,
+        }
+        automl = AutoML()
+        self.model = automl
+        return self.model.fit(x_train, y_train, **automl_settings)
+
+    def autoMLpredict(self, x_test):
+        return self.model.predict(x_test)
+
+    def autoML_print_best_model(self):
+        print("best model", self.model.best_estimator)
+        print("configs", self.model.best_config)
+
     """
         Predicts the prices for the given data
     """
+
     def predict(self, data):
         return self.model.predict(data)
 

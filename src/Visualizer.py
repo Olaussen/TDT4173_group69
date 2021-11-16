@@ -91,11 +91,9 @@ class Visualizer:
         ax.set_title(title)
         return ax, hue_norm
     
-    def error_plot(self, x):
+    def error_plot(self, x, title):
         plt.figure(figsize=(10, 6))
-        plt.title("Difference between prediction and labels")
-        plt.xlabel("Apartment")
-        plt.ylabel("Difference in price")
+        plt.title(title)
         plt.plot(range(len(x)), x)
         plt.show()
 
