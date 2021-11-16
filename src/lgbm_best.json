@@ -1,0 +1,12 @@
+{
+    "boosting_type": "goss",
+    "colsample_bytree": 0.6,
+    "learning_rate": 0.01,
+    "metric": "rmse",
+    "n_estimators": 1000,
+    "num_leaves": 16,
+    "objective": "regression",
+    "reg_alpha": 1,
+    "reg_lambda": 1,
+    "subsample": 0.7
+}
