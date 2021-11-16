@@ -51,6 +51,7 @@ class Preprocessor:
             data[label] = np.expm1(
                 data[label]) if inverse else np.log1p(data[label])
         return data
+    
     def log2ify(self, data, label, inverse=False):
         if label in data.columns:
             data[label] = np.exp2(
@@ -71,6 +72,7 @@ class Preprocessor:
     def combine_floor_stories(self,data):
         data["floor_stories"] = data["floor"]*data["stories"]
         return data
+    
     def floor_fraction(self,data):
         data["floor_fraction"] = data["floor"]/data["stories"]
         return data
@@ -81,18 +83,23 @@ class Preprocessor:
             if data.at[i,"scaled_constructed"] == 0:
                 data.at[i,"scaled_constructed"] = data.at[i,"constructed"]*0.70
         return data
+    
     def combine_district_city_center(self,data):
         data["district_distance"] = data["district"]*data["distance_center"]
         return data
+    
     def combine_area_total_city_center(self,data):
         data["area_total_distance"] = data["area_total"]*data["distance_center"]
         return data
+    
     def combine_district_bathroom_amount(self,data):
         data["district_bath_amount"] = data["district"]*data["bathroom_amount"]
         return data
+    
     def square_diff(self,data):
         data["square_diff"] = data["area_total"]-(data["area_kitchen"])
         return data
+    
     def rich_square(self,data):
         data["richy_square_score"] = 10000
         for i in data.index:
@@ -268,13 +275,33 @@ class Preprocessor:
     def relative_floor(self, data):
         data["relative_floor"] = data["stories"] * data["floor"]
         return data
+    
     def lat_long_fraction(self, data):
         data["lat_lon_frac"] = data["longitude"]-data["latitude"]
         return data
+    
     def apartment_score(self, data):
         data["apartment_score"] = (data["has_elevator"]+data["windows_street"]+data["windows_court"]+data["parking"]+data["heating"]+data["phones"]+data["bathroom_amount"]+(data["floor"]/data["stories"]))
         return data
     
+    def distance_luxury_village(self,data):
+        data["distance_luxury_village"] = [self.distance(data["latitude"][i], data["longitude"][i],55.737886288945795,37.25939226060453) for i in range(len(data["latitude"]))]
+        return data
+    
+    def inside_golden_mile(self,data):
+        data["inside_golden_mile"] = 0
+        center = (55.73953654149639, 37.60149628258151)
+        # km
+        radius = 0.65
+        for i in data.index:
+            distance_from_center = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],center[0],center[1])
+            if(distance_from_center<= radius):
+                data.at[i,"inside_golden_mile"] = 1
+        return data
+    
+    def distance_from_golden_mile(self,data):
+        data["distance_golden_mile"] = [self.distance(data["latitude"][i], data["longitude"][i],55.7391511539523, 37.59601968052924) for i in range(len(data["latitude"]))]
+        return data
     """def find_rich_neighboors(self, data):
         rich = 16.651093950010974
         rich_neighboors = []
