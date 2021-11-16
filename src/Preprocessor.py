@@ -71,6 +71,9 @@ class Preprocessor:
     def combine_floor_stories(self,data):
         data["floor_stories"] = data["floor"]*data["stories"]
         return data
+    def floor_fraction(self,data):
+        data["floor_fraction"] = data["floor"]/data["stories"]
+        return data
     
     def combine_new_constructed_distance(self,data):
         data["scaled_constructed"] = data["constructed"]*data["new"]
@@ -102,7 +105,8 @@ class Preprocessor:
                 data.at[i,"richy_square_score"] = 7
             elif((55.65<=data.at[i,"latitude"]<=56.0) and (37.2<=data.at[i,"longitude"]<=37.78)):
                 data.at[i,"richy_square_score"] = 1000
-        return data    
+        return data
+        
     def closest_hospital(self, data):
         with open("hospitals.txt", "r+") as file:
             lines = file.readlines()
@@ -114,8 +118,38 @@ class Preprocessor:
                 distance = self.distance(row["latitude"], row["longitude"], hospital[0], hospital[1])
                 if distance < closest:
                     closest = distance
-            hospitals.append(np.log10(closest))
+            hospitals.append(closest)
         data["closest_hospital"] = hospitals
+        return data
+    
+    def closest_park(self, data):
+        with open("parks.txt", "r+") as file:
+            lines = file.readlines()
+            coords = [(float(line.split(",")[0]), float(line.split(",")[1])) for line in lines]
+            parks = []
+        for _, row in data.iterrows():
+            closest = float("inf")
+            for park in coords:
+                distance = self.distance(row["latitude"], row["longitude"], park[0], park[1])
+                if distance < closest:
+                    closest = distance
+            parks.append(closest)
+        data["closest_park"] = parks
+        return data
+    
+    def closest_uni(self, data):
+        with open("uni.txt", "r+") as file:
+            lines = file.readlines()
+            coords = [(float(line.split(",")[0]), float(line.split(",")[1])) for line in lines]
+            unis = []
+        for _, row in data.iterrows():
+            closest = float("inf")
+            for uni in coords:
+                distance = self.distance(row["latitude"], row["longitude"], uni[0], uni[1])
+                if distance < closest:
+                    closest = distance
+            unis.append(closest)
+        data["closest_uni"] = unis
         return data
 
     def area_score(self,data):
@@ -408,7 +442,7 @@ class Preprocessor:
         return data
 
     def distance(self, lat, lon, lat_to=55.754093, lon_to=37.620407):
-        radius = 6373000.0  # Earth radius in meters
+        radius = 6373.0  # Earth radius in km
         lat = radians(lat)
         lon = radians(lon)
 
