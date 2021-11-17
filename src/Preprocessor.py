@@ -308,8 +308,6 @@ class Preprocessor:
         centers = [(55.72080955799734, 37.56532305228938),(55.733461209237284, 37.57853367452259),(55.74283408846054, 37.60129837589054),(55.740730168657976, 37.57700470204264)]
         rad1 = 1.45
         rad2 = 0.6
-        # km
-        radius = 0.65
         for i in data.index:
             distance_from_center1 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[0][0],centers[0][1])
             distance_from_center2 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[1][0],centers[1][1])
@@ -321,6 +319,234 @@ class Preprocessor:
     
     def distance_from_khamovniki_center(self,data):
         data["distance_khamovniki_center"] = [self.distance(data["latitude"][i], data["longitude"][i],55.733829823959425, 37.57598361150507) for i in range(len(data["latitude"]))]
+        return data
+    
+    def inside_khamovniki_and_yakimanka(self,data):
+        data["inside_khamovniki_yakimanka"] = 0
+        centers = [(55.722842003327585, 37.574932334725695),(55.733313673521124, 37.58786146165378)]
+        rad1 = 1.4
+        rad2 = 2.0
+        for i in data.index:
+            distance_from_center1 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[0][0],centers[0][1])
+            distance_from_center2 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[1][0],centers[1][1])
+            if((distance_from_center1<= rad1)or(distance_from_center2<= rad2)):
+                data.at[i,"inside_khamovniki_yakimanka"] = 1
+        return data
+    
+    def inside_yakimanka(self,data):
+        data["inside_yakimanka"] = 0
+        centers = [(55.74163081394598, 37.61627821363091),(55.73627260408775, 37.61346612143006),(55.73077227529825, 37.60997299730604),(55.72605357100986, 37.5996889100099)]
+        rad1 = 0.6
+        rad2 = 0.65
+        rad3 = 0.78
+        for i in data.index:
+            distance_from_center1 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[0][0],centers[0][1])
+            distance_from_center2 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[1][0],centers[1][1])
+            distance_from_center3 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[2][0],centers[2][1])
+            distance_from_center4 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[3][0],centers[3][1])
+            if((distance_from_center1<= rad1)or(distance_from_center2<= rad2)or(distance_from_center3<= rad2)or(distance_from_center4<= rad3)):
+                data.at[i,"inside_yakimanka"] = 1
+        return data
+    
+    def inside_arbat(self,data):
+        data["inside_arbat"] = 0
+        centers = [(55.75275363343967, 37.607045328488844),(55.74527362997916, 37.58460600370206),(55.75168130861189, 37.59244539997004),(55.75059904094849, 37.583070554322056)]
+        rad1 = 0.31
+        rad2 = 0.12
+        rad3 = 0.53
+        rad4 = 0.6
+        for i in data.index:
+            distance_from_center1 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[0][0],centers[0][1])
+            distance_from_center2 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[1][0],centers[1][1])
+            distance_from_center3 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[2][0],centers[2][1])
+            distance_from_center4 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[3][0],centers[3][1])
+            if((distance_from_center4<= rad4)or(distance_from_center3<= rad3)or(distance_from_center1<= rad1)or(distance_from_center2<= rad2)):
+                data.at[i,"inside_arbat"] = 1
+        return data
+    
+    def inside_tverskoy(self,data):
+        data["inside_tverskoy"] = 0
+        centers = [(55.788417781850306, 37.593312026018964),(55.77511666189357, 37.603314054940284),(55.76831412199218, 37.61003700393288),(55.76203646189537, 37.61389958917979),(55.75384950055093, 37.62029284325331)]
+        rad1 = 0.42
+        rad2 = 1
+        rad3 = 0.73
+        rad4 = 0.4
+        rad5 = 0.83
+        for i in data.index:
+            distance_from_center1 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[0][0],centers[0][1])
+            distance_from_center2 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[1][0],centers[1][1])
+            distance_from_center3 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[2][0],centers[2][1])
+            distance_from_center4 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[3][0],centers[3][1])
+            distance_from_center5 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[4][0],centers[4][1])
+            if((distance_from_center1<= rad1)or(distance_from_center2<= rad2)or(distance_from_center3<= rad3)or(distance_from_center4<= rad4)or(distance_from_center5<= rad5)):
+                data.at[i,"inside_tverskoy"] = 1
+        return data
+    
+    def inside_zamoskvorechye(self,data):
+        data["inside_zamoskvorechye"] = 0
+        centers = [(55.724772756233676, 37.62366383340057),(55.731251076773965, 37.63653395506052),(55.73835792252437, 37.635563409780225),(55.74466143972234, 37.633643796367785)]
+        rad1 = 0.45
+        rad2 = 0.81
+        rad3 = 0.7
+        rad4 = 0.53
+        for i in data.index:
+            distance_from_center1 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[0][0],centers[0][1])
+            distance_from_center2 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[1][0],centers[1][1])
+            distance_from_center3 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[2][0],centers[2][1])
+            distance_from_center4 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[3][0],centers[3][1])
+            if((distance_from_center1<= rad1)or(distance_from_center2<= rad2)or(distance_from_center3<= rad3)or(distance_from_center4<= rad4)):
+                data.at[i,"inside_zamoskvorechye"] = 1
+        return data
+    
+    def inside_presnensky(self,data):
+        data["inside_presnensky"] = 0
+        centers = [(55.75391845697493, 37.53422062903805),(55.76003533601604, 37.54938877500197),(55.76473880878593, 37.56463365341768),(55.76446917930647, 37.581678475143406),(55.75963515297629, 37.5976562520681)]
+        rad1 = 0.9
+        rad2 = 1.12
+        rad3 = 1.15
+        rad4 = 1.1
+        rad5 = 0.52
+        for i in data.index:
+            distance_from_center1 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[0][0],centers[0][1])
+            distance_from_center2 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[1][0],centers[1][1])
+            distance_from_center3 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[2][0],centers[2][1])
+            distance_from_center4 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[3][0],centers[3][1])
+            distance_from_center5 = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],centers[4][0],centers[4][1])
+            if((distance_from_center1<= rad1)or(distance_from_center2<= rad2)or(distance_from_center3<= rad3)or(distance_from_center4<= rad4)or(distance_from_center5<= rad5)):
+                data.at[i,"inside_presnensky"] = 1
+        return data
+    
+    def distance_to_closest_powerplant(self,data):
+        with open("power_plants.txt", "r+") as file:
+            lines = file.readlines()
+            coords = [(float(line.split(",")[0]), float(line.split(",")[1])) for line in lines]
+            plants = []
+        for _, row in data.iterrows():
+            closest = float("inf")
+            for plant in coords:
+                distance = self.distance(row["latitude"], row["longitude"], plant[0], plant[1])
+                if distance < closest:
+                    closest = distance
+            plants.append(closest)
+        data["distance_closest_powerplant"] = plants
+        return data
+    
+    def distance_to_closest_museum(self,data):
+        with open("museums.txt", "r+") as file:
+            lines = file.readlines()
+            coords = [(float(line.split(",")[0]), float(line.split(",")[1])) for line in lines]
+            museums = []
+        for _, row in data.iterrows():
+            closest = float("inf")
+            for museum in coords:
+                distance = self.distance(row["latitude"], row["longitude"], museum[0], museum[1])
+                if distance < closest:
+                    closest = distance
+            museums.append(closest)
+        data["distance_closest_museum"] = museums
+        return data
+    
+    def distance_to_closest_stadium(self,data):
+        with open("stadiums.txt", "r+") as file:
+            lines = file.readlines()
+            coords = [(float(line.split(",")[0]), float(line.split(",")[1])) for line in lines]
+            stadiums = []
+        for _, row in data.iterrows():
+            closest = float("inf")
+            for stadium in coords:
+                distance = self.distance(row["latitude"], row["longitude"], stadium[0], stadium[1])
+                if distance < closest:
+                    closest = distance
+            stadiums.append(closest)
+        data["distance_closest_stadium"] = stadiums
+        return data
+    
+    def distance_to_closest_theater(self,data):
+        with open("theaters.txt", "r+") as file:
+            lines = file.readlines()
+            coords = [(float(line.split(",")[0]), float(line.split(",")[1])) for line in lines]
+            theaters = []
+        for _, row in data.iterrows():
+            closest = float("inf")
+            for theater in coords:
+                distance = self.distance(row["latitude"], row["longitude"], theater[0], theater[1])
+                if distance < closest:
+                    closest = distance
+            theaters.append(closest)
+        data["distance_closest_theater"] = theaters
+        return data
+    
+    def distance_to_closest_church(self,data):
+        with open("churches.txt", "r+") as file:
+            lines = file.readlines()
+            coords = [(float(line.split(",")[0]), float(line.split(",")[1])) for line in lines]
+            churches = []
+        for _, row in data.iterrows():
+            closest = float("inf")
+            for church in coords:
+                distance = self.distance(row["latitude"], row["longitude"], church[0], church[1])
+                if distance < closest:
+                    closest = distance
+            churches.append(closest)
+        data["distance_closest_church"] = churches
+        return data
+    
+    def distance_to_closest_railway(self,data):
+        with open("railway_terminals.txt", "r+") as file:
+            lines = file.readlines()
+            coords = [(float(line.split(",")[0]), float(line.split(",")[1])) for line in lines]
+            railways = []
+        for _, row in data.iterrows():
+            closest = float("inf")
+            for railway in coords:
+                distance = self.distance(row["latitude"], row["longitude"], railway[0], railway[1])
+                if distance < closest:
+                    closest = distance
+            railways.append(closest)
+        data["distance_closest_railway"] = railways
+        return data
+    
+    def divide_logprice_by_total_area(self,data):
+        data["price"] = data["price"]/data["area_total"]
+        return data
+
+    def distance_from_vnukovo(self,data):
+        data["distance_from_vnukovo_airport"] = [self.distance(data["latitude"][i], data["longitude"][i],55.596111, 37.2675) for i in range(len(data["latitude"]))]
+        return data
+    
+    def distance_from_sheremetyevo(self,data):
+        data["distance_from_sheremetyevo_airport"] = [self.distance(data["latitude"][i], data["longitude"][i],55.972778, 37.414722) for i in range(len(data["latitude"]))]
+        return data
+    
+    def distance_from_domodedovo(self,data):
+        data["distance_from_domodedovo_airport"] = [self.distance(data["latitude"][i], data["longitude"][i],55.408611, 37.906111) for i in range(len(data["latitude"]))]
+        return data
+    
+    def distance_from_zhukovsky(self,data):
+        data["distance_from_zhukovsky_airport"] = [self.distance(data["latitude"][i], data["longitude"][i],55.553333, 38.151667) for i in range(len(data["latitude"]))]
+        return data
+    
+    def distance_from_ostafyevo(self,data):
+        data["distance_from_ostafyevo_airport"] = [self.distance(data["latitude"][i], data["longitude"][i],55.511667, 37.507222) for i in range(len(data["latitude"]))]
+        return data
+
+    def distance_to_closest_airport(self,data):
+        with open("airports.txt", "r+") as file:
+            lines = file.readlines()
+            coords = [(float(line.split(",")[0]), float(line.split(",")[1])) for line in lines]
+            airports = []
+        for _, row in data.iterrows():
+            closest = float("inf")
+            for airport in coords:
+                distance = self.distance(row["latitude"], row["longitude"], airport[0], airport[1])
+                if distance < closest:
+                    closest = distance
+            airports.append(closest)
+        data["distance_closest_airport"] = airports
+        return data
+
+    def multiply_square_price_with_total_area(self,data):
+        data["price"] = data["price"]*data["area_total"]
         return data
     
     """def find_rich_neighboors(self, data):
@@ -393,6 +619,7 @@ class Preprocessor:
         area_kitchen = data[data["area_living"].notna()]
         area_kitchen_fraction = (
             area_kitchen["area_kitchen"] / area_kitchen["area_total"]).mean()
+        
         data["district"] = data["district"].fillna(-1)
         for i, row in data.iterrows():
             key = str(
@@ -453,18 +680,21 @@ class Preprocessor:
             data["latitude"][i], data["longitude"][i]) for i in range(len(data["latitude"]))]
         return data
     
-    def combine_latlon_subway(self, data,subway_table,read_from_file=True):
+    def combine_latlon_subway(self, data, read_from_file=True):
         if(not read_from_file):
             data["closest_subway_distance"] = 0 
+            subway_table = pd.read_csv("subway_table.csv")
+            subway_distances = []
             for i in data.index:
                 closest = float("inf")
                 for j in (subway_table.index):
-                    sub_way_distance = self.distance(data.at[i,"latitude"],data.at[i,"longitude"],subway_table.at[j,"latitude"],subway_table.at[j,"longitude"])
+                    sub_way_distance = self.distance(data.at[i,"latitude"], data.at[i,"longitude"], subway_table.at[j,"latitude"], subway_table.at[j,"longitude"])
                     if(sub_way_distance < closest):
                         closest = sub_way_distance
-                data.at[i,"closest_subway_distance"] = closest
+                subway_distances.append(closest)
+            data["closest_subway_distance"] = subway_distances
             save_to_file = pd.DataFrame(data["closest_subway_distance"])
-            save_to_file.to_csv("./closest_subway_distance.csv",index=False)
+            save_to_file.to_csv("./closest_subway_distance.csv", index=False)
         else:
             data["closest_subway_distance"]= pd.read_csv("./closest_subway_distance.csv")
         return data
