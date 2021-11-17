@@ -112,11 +112,11 @@ class TestModel:
         estimators.append(('rf', rf))
         return Pipeline(estimators)
 
-    def xgboost_model(self):
+    def xgboost_model(self, params = {}):
         estimators = []
         estimators.append(('standardize', StandardScaler()))
         estimators.append(('selector', VarianceThreshold()))
-        boost = xgboost.XGBRegressor()
+        boost = xgboost.XGBRegressor(**params)
         estimators.append(('boost', boost))
         return Pipeline(estimators)
 
