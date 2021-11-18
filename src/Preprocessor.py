@@ -64,7 +64,7 @@ class Preprocessor:
         return data
     
     def fix_categorical(self, data):
-        categorical = ["seller", "district", "material", "parking", "heating"]
+        categorical = ["district", "material", "condition", "building_id", "parking"]
         for c in categorical:
             data[c] = data[c].astype("category")
         return data
@@ -429,6 +429,8 @@ class Preprocessor:
         data["parking"] = data["parking"].fillna(-1)
         data["garbage_chute"] = data["garbage_chute"].fillna(-1)
         data["heating"] = data["heating"].fillna(-1)
+        data["condition"] = data["condition"].fillna(-1)
+        data["parking"] = data["parking"].fillna(-1)
         return data
 
     def remove_zero_values(self, data, key):
@@ -440,7 +442,7 @@ class Preprocessor:
 
     def general_removal(self, data):
         data = self.remove_labels(
-            data, ["layout", "ceiling", "balconies", "loggias", "condition", "elevator_without", "street", "address"])
+            data, ["layout", "ceiling", "balconies", "loggias", "elevator_without", "street", "address"])
         return data
 
     def fix_latlon_outliers(self, data, outliers):
