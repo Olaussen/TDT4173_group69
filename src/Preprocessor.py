@@ -456,6 +456,11 @@ class Preprocessor:
         data["distance_center"] = [self.distance(
             data["latitude"][i], data["longitude"][i]) for i in range(len(data["latitude"]))]
         return data
+
+    def area_distance(self, data):
+        dist = np.log1p(data["distance_center"]*1000) / data["area_total"]
+        data["area_distance"] = dist
+        return data
     
     def combine_latlon_subway(self, data, read_from_file=True):
         if(not read_from_file):
