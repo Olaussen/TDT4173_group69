@@ -63,6 +63,12 @@ class Preprocessor:
                 data[label]) if inverse else np.sqrt(data[label])
         return data
     
+    def fix_categorical(self, data):
+        categorical = ["seller", "district", "material", "parking", "heating"]
+        for c in categorical:
+            data[c] = data[c].astype("category")
+        return data
+
     def skew_fix(self,data,label, inverse=False):
         if label in data.columns:
             data[label] = stats.boxcox(data[label])
@@ -80,7 +86,7 @@ class Preprocessor:
         data["scaled_constructed"] = data["constructed"]*data["new"]
         for i in data.index:
             if data.at[i,"scaled_constructed"] == 0:
-                data.at[i,"scaled_constructed"] = data.at[i,"constructed"]*0.70
+                data.at[i,"scaled_constructed"] = data.at[i,"constructed"]*(data.at[i,"constructed"]/2021)
         return data
     
     def combine_district_city_center(self,data):
@@ -482,6 +488,7 @@ class Preprocessor:
             else:
                 has_elevator.append(0)
         data["has_elevator"] = has_elevator
+        data["has_elevator"] = data["has_elevator"].astype("category").cat.as_ordered()
         return data
 
     def redo_new(self, data):

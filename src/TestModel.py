@@ -105,28 +105,16 @@ class TestModel:
         return Pipeline(estimators)
 
     def randomforest_model(self):
-        estimators = []
-        estimators.append(('standardize', StandardScaler()))
-        estimators.append(('selector', VarianceThreshold()))
         rf = RandomForestRegressor()
-        estimators.append(('rf', rf))
-        return Pipeline(estimators)
+        return rf
 
     def xgboost_model(self, params = {}):
-        estimators = []
-        estimators.append(('standardize', StandardScaler()))
-        estimators.append(('selector', VarianceThreshold()))
         boost = xgboost.XGBRegressor(**params)
-        estimators.append(('boost', boost))
-        return Pipeline(estimators)
+        return boost
 
-    def lgbm_model(self):
-        estimators = []
-        estimators.append(('standardize', StandardScaler()))
-        estimators.append(('selector', VarianceThreshold()))
-        lightgbm = lgbm.LGBMRegressor()
-        estimators.append(('lgbm', lightgbm))
-        return Pipeline(estimators)
+    def lgbm_model(self, params = {}):
+        lightgbm = lgbm.LGBMRegressor(**params)
+        return lightgbm
 
     def start_rf_search(self, params, load=False):
         if load:
