@@ -445,8 +445,9 @@ class Preprocessor:
 
     def fix_latlon_outliers(self, data, outliers):
         for _, row in outliers.iterrows():
-            data["latitude"][row["id"]] = self.district_avg_dict["4"]["lat"]
-            data["longitude"][row["id"]] = self.district_avg_dict["4"]["lon"]
+            data["latitude"][row["id"]] = self.district_avg_dict["11"]["lat"]
+            data["longitude"][row["id"]] = self.district_avg_dict["11"]["lon"]
+            data["district"] = 11.0
         return data
 
     def remove_redundant_features(self, data):
@@ -460,6 +461,21 @@ class Preprocessor:
     def area_distance(self, data):
         dist = np.log1p(data["distance_center"]*1000) / data["area_total"]
         data["area_distance"] = dist
+        return data
+
+    def closest_powerplant(self, data):
+        with open("power_plants.txt", "r+") as file:
+            lines = file.readlines()
+            coords = [(float(line.split(",")[0]), float(line.split(",")[1])) for line in lines]
+            plants = []
+        for _, row in data.iterrows():
+            closest = float("inf")
+            for plant in coords:
+                distance = self.distance(row["latitude"], row["longitude"], plant[0], plant[1])
+                if distance < closest:
+                    closest = distance
+            plants.append(closest)
+        data["closest_powerplant"] = plants
         return data
     
     def combine_latlon_subway(self, data, read_from_file=True):
