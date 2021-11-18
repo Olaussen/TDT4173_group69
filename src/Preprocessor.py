@@ -89,7 +89,7 @@ class Preprocessor:
         return data
     
     def combine_area_total_city_center(self,data):
-        data["area_total_distance"] = data["area_total"]*data["distance_center"]
+        data["area_total_distance"] = data["area_total"]/np.log1p(data["distance_center"])
         return data
     
     def combine_district_bathroom_amount(self,data):

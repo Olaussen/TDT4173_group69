@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import VarianceThreshold
 from tensorflow.keras import backend as K
 from sklearn.pipeline import Pipeline
@@ -61,7 +61,7 @@ class TestModel:
 
     def fit(self):
         estimators = []
-        estimators.append(('standardize', RobustScaler()))
+        estimators.append(('standardize', StandardScaler()))
         # Set paramters for Grid Search
        # param_grid = {'n_estimators': [200, 300, 400, 500, 600],
         # 'max_features': [0.1, 0.3, 0.6]
