@@ -56,6 +56,11 @@ class Preprocessor:
             data[label] = np.exp2(
                 data[label]) if inverse else np.log2(data[label])
         return data
+
+    def log10ify(self, data, label, inverse=False):
+        if label in data.columns:
+            data[label] = 10 ** data[label] if inverse else np.log10(data[label])
+        return data
     
     def squareify(self, data, label, inverse=False):
         if label in data.columns:
@@ -388,6 +393,21 @@ class Preprocessor:
         data["has_windows"] = has_windows
         return data
 
+    def impute_nans_with_building_id(self, data, fields):
+        for field in fields:
+            nan_values = data.loc[(data[field] == -1)]
+            for i, row in nan_values.iterrows():
+                id = data.at[i,"building_id"]
+                same_building = data.loc[(data["building_id"] == id)]
+                same_building = same_building.loc[same_building[field] != -1]
+                same_building = same_building.loc[same_building["id"] != data.at[i,"id"]]
+                if(same_building.shape[0] == 0):
+                    data.at[i, field] = -1
+                else:
+                    same_building[field] = same_building[field].astype("category")
+                    data.at[i, field] = same_building[field].mode()[0]
+            return data 
+
     def remove_NaNs(self, data):
         district_average = self.district_avg(data)
         self.district_avg_dict = district_average
@@ -430,7 +450,7 @@ class Preprocessor:
         data["garbage_chute"] = data["garbage_chute"].fillna(-1)
         data["heating"] = data["heating"].fillna(-1)
         data["condition"] = data["condition"].fillna(-1)
-        data["parking"] = data["parking"].fillna(-1)
+
         return data
 
     def remove_zero_values(self, data, key):
@@ -442,14 +462,13 @@ class Preprocessor:
 
     def general_removal(self, data):
         data = self.remove_labels(
-            data, ["layout", "ceiling", "balconies", "loggias", "elevator_without", "street", "address"])
+            data, ["ceiling", "balconies", "layout", "loggias", "elevator_without", "street", "address"])
         return data
 
     def fix_latlon_outliers(self, data, outliers):
         for _, row in outliers.iterrows():
             data["latitude"][row["id"]] = self.district_avg_dict["11"]["lat"]
             data["longitude"][row["id"]] = self.district_avg_dict["11"]["lon"]
-            data["district"] = 11.0
         return data
 
     def remove_redundant_features(self, data):

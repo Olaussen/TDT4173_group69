@@ -24,6 +24,7 @@ import json
 
 
 def root_mean_squared_log_error(y_true, y_pred):
+    y_pred = np.abs(y_pred)
     return mean_squared_log_error(y_true, y_pred) ** 0.5
 
 
@@ -108,11 +109,11 @@ class TestModel:
         rf = RandomForestRegressor()
         return rf
 
-    def xgboost_model(self, params = {}):
+    def xgboost_model(self, params = {},):
         boost = xgboost.XGBRegressor(**params)
         return boost
 
-    def lgbm_model(self, params = {}):
+    def lgbm_model(self, params = {},):
         lightgbm = lgbm.LGBMRegressor(**params)
         return lightgbm
 
